@@ -13,8 +13,6 @@ PASSWORD = 'default'
 REDIS_DB = 1
 REDIS_PORT = 6379
 REDIS_HOST = 'localhost'
-SALT = 'retwis'
-
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -24,8 +22,7 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
 @app.route('/')
 def show_entries():
-    idlist = list(r.smembers('news:nytimes:sid'))
-    print "Hello"
+    idlist = list(r.sdiff('news:nytimes:sid', 'user:1:read:sids'))
     return render_template('show_entries.html', idlist = idlist, r = r)
 
 @app.route('/',methods=['POST'])
@@ -37,8 +34,14 @@ def show_stories():
    entries['nst'].append(nst)
    return render_template('show_stories.html', entries = entries, r=r)
 
-@app.route('/', methods=['POST'])
+@app.route('/submit', methods=['POST'])
 def submit_score():
+   sid = request.form['sid']
+   r.sadd('user:%s:read:sids' % 1, sid)
+   nst = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
+   for i in range(1,nst):
+      score = request.form['%s:paragraph_%s' % (sid,i)]
+      r.sadd('nytimes:usps:%s:%s:%s' % (1,sid,i), score)
    return redirect(url_for('show_entries'))    
     
 @app.route('/add', methods=['POST'])

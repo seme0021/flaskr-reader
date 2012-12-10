@@ -10,7 +10,7 @@ A Flask and Redis powered reading aplication. The redis database is available up
 ## Installation
 
 ## Documentation
-
+I built this project based on this [prior work](https://github.com/fyears/flaskr-redis) by fyears.
 I chose to use redis for this project for scalability and the ability to distribute the database accross mulitple servers.
 
 ## License
