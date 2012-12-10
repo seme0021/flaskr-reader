@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block body %}
+   <div id="article">
+       {% for i in idlist %}
+          <div> {{ (r.smembers('news:nytimes:1:paragraph_%s' % i).pop()).replace("[","").replace("]","").decode('utf-8') }}</div>
+       {% endfor %}
+   </div>
+{% endblock %}

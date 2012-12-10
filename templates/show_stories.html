@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block body %}
+       <div id="article" name="test">
+          <form action"/"  method=post class=add-entry>
+       {% for i in range(1,entries['nst'][0]) %}
+          <div> <td> {{ (r.smembers('news:nytimes:%s:paragraph_%s' % (entries['sid'][0],i)).pop()).replace("[","").replace("]","").decode('utf-8').replace('\n','')}}</td><td><select name="{{entries['sid'][0]}}:paragraph_{{i}}"> {% for o in range(1,11) %} <option>{{ o }}</option> {% endfor %}</select></td></div>
+         <div> ........ </div>
+       {% endfor %}
+       <input  type=submit value="Submit Scores">
+       </form>
+   </div>
+{% endblock %}

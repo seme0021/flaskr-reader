@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block body %}
+  {% if session.logged_in %}
+    <form action="{{ url_for('show_stories') }}" method=post class=show-story>
+    <select name="stories">
+       {% for i in idlist %}
+          <option value={{i}}>{{i}} - {{ (r.smembers('news:nytimes:%s:headline' % i).pop()).replace("[","").replace("]","").decode('utf-8') }}</option>
+  {% endfor %}
+  <input  type=submit value=Share>
+  </form>
+  {% endif %}
+{% endblock %}
