@@ -22,11 +22,14 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
 @app.route('/')
 def show_entries():
-    idlist = list(r.sdiff('news:nytimes:sid', 'user:1:read:sids'))
+    uid = session.get('uid')
+    idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
     return render_template('show_entries.html', idlist = idlist, r = r)
 
 @app.route('/',methods=['POST'])
 def show_stories():
+   if not session.get('logged_in'):
+      abort(401)
    sid = request.form['stories']
    nst = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
    entries = {'sid':[],'nst':[]}
@@ -37,39 +40,26 @@ def show_stories():
 @app.route('/submit', methods=['POST'])
 def submit_score():
    sid = request.form['sid']
+   uid = session.get('uid')
    r.sadd('user:%s:read:sids' % 1, sid)
    nst = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
    for i in range(1,nst):
       score = request.form['%s:paragraph_%s' % (sid,i)]
-      r.sadd('nytimes:usps:%s:%s:%s' % (1,sid,i), score)
+      r.sadd('nytimes:usps:%s:%s:%s' % (uid,sid,i), score)
    return redirect(url_for('show_entries'))    
     
-@app.route('/add', methods=['POST'])
-def add_entry():
-    if not session.get('logged_in'):
-        abort(401)
-    #g.db.execute('insert into entries (title, text) values (?, ?)',
-                 #[request.form['title'], request.form['text']])
-    #g.db.commit()
-    title = request.form['title']
-    text = request.form['text']
-    id = r.incr('global:LatestEntryId')
-    r.lpush('idlist', id)
-    r.set('entries:%s:title' % id, '%s' % title)
-    r.set('entries:%s:text' % id, '%s' % text)
-    flash('New entry was successfully posted')
-    return redirect(url_for('show_entries'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
+        if request.form['username'] not in r.smembers('users'):
             error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
+        elif request.form['password'] != r.get('pw:%s' % request.form['username']):
             error = 'Invalid password'
         else:
             session['logged_in'] = True
+            session['uid'] = r.get('uid:%s' % request.form['username'])
             flash('You were logged in')
             return redirect(url_for('show_entries'))
     return render_template('login.html', error=error)
