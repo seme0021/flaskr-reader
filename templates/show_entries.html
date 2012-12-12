@@ -4,10 +4,10 @@
     <form action="{{ url_for('show_stories') }}" method=post class=show-story>
     <div style="display: none;">3</div>
     <select name="stories">
-       {% for i in idlist %}
+       {% for i in entries['idlist'][0] %}
           <option value={{i}}>{{i}} - {{ (r.smembers('news:nytimes:%s:headline' % i).pop()).replace("[","").replace("]","").decode('utf-8') }}</option>
   {% endfor %}
-  <input  type=submit value=Share>
+  <input  type=submit value=Share name="full">
   </form>
   {% endif %}
 {% endblock %}

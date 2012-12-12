@@ -5,11 +5,10 @@ from contextlib import closing
 import redis
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
+from score_story import get_parameters,score,process_story,top5
 
 # configuration
 SECRET_KEY = 'development key'
-USERNAME = 'admin'
-PASSWORD = 'default'
 REDIS_DB = 1
 REDIS_PORT = 6379
 REDIS_HOST = 'localhost'
@@ -23,13 +22,20 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 @app.route('/')
 def show_entries():
     uid = session.get('uid')
+    entries = {'idlist':[],'alllist':[]}
     idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
-    return render_template('show_entries.html', idlist = idlist, r = r)
+    alllist = list(r.smembers('news:nytimes:sid'))
+    entries['idlist'].append(idlist)
+    entries['alllist'].append(alllist)
+    print entries['idlist']
+    return render_template('show_entries.html', entries=entries, r = r)
+
 
 @app.route('/',methods=['POST'])
 def show_stories():
    if not session.get('logged_in'):
       abort(401)
+   print "show stories()"
    sid = request.form['stories']
    nst = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
    entries = {'sid':[],'nst':[]}
@@ -48,6 +54,31 @@ def submit_score():
       r.sadd('nytimes:usps:%s:%s:%s' % (uid,sid,i), score)
    return redirect(url_for('show_entries'))    
     
+@app.route('/all', methods=['POST'])
+def read_abridged():
+   if not session.get('logged_in'):
+      abort(401)
+   sid = request.form['abr-stories']
+   entries = {'sid':[],'top5':[]}
+   print str(sid)
+   story = process_story(sid)
+   t =top5(story)
+   entries['sid'].append(sid)
+   for i in t:
+      entries['top5'].append(i[0])
+   print entries
+   return render_template('show_abridged.html', entries = entries, r=r)
+
+@app.route('/all')
+def read_stories():
+   uid = session.get('uid')
+   entries = {'idlist':[],'alllist':[]}
+   idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
+   alllist = list(r.smembers('news:nytimes:sid'))
+   entries['idlist'].append(idlist)
+   entries['alllist'].append(alllist)
+   print "read_stories()"
+   return render_template('show_all_stories.html', entries=entries, r = r)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
