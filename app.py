@@ -23,6 +23,7 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 def show_entries():
     uid = session.get('uid')
     entries = {'idlist':[],'alllist':[]}
+
     idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
     alllist = list(r.smembers('news:nytimes:sid'))
     entries['idlist'].append(idlist)
@@ -30,7 +31,9 @@ def show_entries():
     print entries['idlist']
     return render_template('show_entries.html', entries=entries, r = r)
 
-
+#Called by: show_entries.html
+#Calls: show_stories.html
+#Gets number of paragraphs in a story
 @app.route('/',methods=['POST'])
 def show_stories():
    if not session.get('logged_in'):
@@ -53,13 +56,16 @@ def submit_score():
       score = request.form['%s:paragraph_%s' % (sid,i)]
       r.sadd('nytimes:usps:%s:%s:%s' % (uid,sid,i), score)
    return redirect(url_for('show_entries'))    
-    
+
+#Called by: show_all_stories.html
+#Calls: show_abridged.html
 @app.route('/all', methods=['POST'])
 def read_abridged():
    if not session.get('logged_in'):
       abort(401)
    sid = request.form['abr-stories']
    entries = {'sid':[],'top5':[]}
+
    print str(sid)
    story = process_story(sid)
    t =top5(story)
@@ -69,10 +75,15 @@ def read_abridged():
    print entries
    return render_template('show_abridged.html', entries = entries, r=r)
 
+#Post the non-expired story ids
 @app.route('/all')
 def read_stories():
    uid = session.get('uid')
-   entries = {'idlist':[],'alllist':[]}
+   entries = {'idlist':[],'alllist':[],'cur_ids':[]}
+   #Get current stories
+   cur_keys = r.keys("news:active:*")
+   for key in cur_keys:
+       entries['cur_ids'].append(key.split(':')[2])
    idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
    alllist = list(r.smembers('news:nytimes:sid'))
    entries['idlist'].append(idlist)

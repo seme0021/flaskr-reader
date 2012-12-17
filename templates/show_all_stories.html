@@ -4,7 +4,7 @@
   <div> <h3> Read Abridged Stories</h3></div>
   <form action="{{ url_for('read_abridged') }}" method=post class=abridged-story>
      <select name="abr-stories">
-        {% for i in entries['alllist'][0] %}
+        {% for i in entries['cur_ids'] %}
           <option value={{i}}>{{i}} - {{ (r.smembers('news:nytimes:%s:headline' % i).pop()).replace("[","").replace("]","").decode('utf-8') }}</option>
   {% endfor %}
      </select>
