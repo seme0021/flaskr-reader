@@ -57,6 +57,19 @@ def submit_score():
       r.sadd('nytimes:usps:%s:%s:%s' % (uid,sid,i), score)
    return redirect(url_for('show_entries'))    
 
+@app.route('/story/<int:sid>', methods = ['POST','GET'])
+def abridged(sid):
+   print "abridged"
+   entries = {'sid':[],'top5':[]}
+   print str(sid)
+   story = process_story(sid)
+   t =top5(story)
+   entries['sid'].append(sid)
+   for i in t:
+      entries['top5'].append(i[0])
+   print entries
+   return render_template('show_abridged.html', entries = entries, r=r)
+
 #Called by: show_all_stories.html
 #Calls: show_abridged.html
 @app.route('/all', methods=['POST'])
