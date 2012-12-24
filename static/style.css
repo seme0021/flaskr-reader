@@ -6,7 +6,8 @@ h2              { font-size: 1.2em; }
 
 .page           { margin: 2em auto; width: 50em; border: 5px solid #ccc;
                   padding: 0.8em; background: white; height:100em; }
-.article        { font-family: calibri; font-size: 0.8em; }
+#article        { width:70%; margin-left:15%; font-family: calibri; font-size: 0.9em; }
+#abridged-article {width:70%; margin-left:15%; font-family: calibri; font-size: 0.9em; }
 .entries        { list-style: none; margin: 0; padding: 0; }
 .entries li     { margin: 0.8em 1.2em; }
 .entries li h2  { margin-left: -1em; }

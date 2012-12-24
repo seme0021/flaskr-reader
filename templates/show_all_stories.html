@@ -1,14 +1,37 @@
 {% extends "layout.html" %}
 {% block body %}
   {% if session.logged_in %}
-  <div> <h3> Read Abridged Stories</h3></div>
-  <form action="{{ url_for('read_abridged') }}" method=post class=abridged-story>
-     <select name="abr-stories">
-        {% for i in entries['cur_ids'] %}
-          <option value={{i}}>{{i}} - {{ (r.smembers('news:nytimes:%s:headline' % i).pop()).replace("[","").replace("]","").decode('utf-8') }}</option>
-  {% endfor %}
-     </select>
-     <input  type=submit value="Read Abridged" name="abridged">
-  </form>
+   <div id="container-4">
+        <div id="box-4-3" class="box">
+           {% for i in range(1,7) %}
+                <div id="story">
+                <a href="{{ url_for('abridged', sid = entries['cur_ids'][i]) }}" style="text-decoration: none">
+                    <h4> {{r.smembers('news:nytimes:%s:headline' % entries['cur_ids'][i]).pop().replace("[","").replace("]","").decode('utf-8') }} </h4>
+                    <p> {{r.smembers('news:nytimes:%s:paragraph_1' % entries['cur_ids'][i]).pop().replace("[","").replace("]","").decode('utf-8')[:250] + "..." }} </p>
+              </a> </div>
+           {% endfor %}
+        </div>
+        <div id="box-4-3" class="box">
+           {% for i in range(8,15) %}
+                <div id="story">
+                   <a href="{{ url_for('abridged', sid = entries['cur_ids'][i]) }}" style="text-decoration: none">
+                    <h4> {{r.smembers('news:nytimes:%s:headline' % entries['cur_ids'][i]).pop().replace("[","").replace("]","").decode('utf-8') }} </h4>
+                    <p> {{r.smembers('news:nytimes:%s:paragraph_1' % entries['cur_ids'][i]).pop().replace("[","").replace("]","").decode('utf-8')[:250] + "..." }} </p>
+               </a>
+            </div>
+           {% endfor %}
+        </div>
+        <div id="box-4-3" class="box">
+           {% for i in range(16,19) %}
+                <div id="story">
+                   <a href="{{ url_for('abridged', sid = entries['cur_ids'][i]) }}" style="text-decoration: none">
+                    <h4> {{r.smembers('news:nytimes:%s:headline' % entries['cur_ids'][i]).pop().replace("[","").replace("]","").decode('utf-8') }} </h4>
+                    <p> {{r.smembers('news:nytimes:%s:paragraph_1' % entries['cur_ids'][i]).pop().replace("[","").replace("]","").decode('utf-8')[:250] + "..." }} </p>
+               </a> </div>
+           {% endfor %}
+        </div>
+</div>
+
+
   {% endif %}
 {% endblock %}

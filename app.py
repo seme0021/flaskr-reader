@@ -34,12 +34,11 @@ def show_entries():
 #Called by: show_entries.html
 #Calls: show_stories.html
 #Gets number of paragraphs in a story
-@app.route('/',methods=['POST'])
-def show_stories():
+@app.route('/full/<int:sid>',methods=['POST','GET'])
+def show_stories(sid):
    if not session.get('logged_in'):
       abort(401)
    print "show stories()"
-   sid = request.form['stories']
    nst = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
    entries = {'sid':[],'nst':[]}
    entries['sid'].append(sid)

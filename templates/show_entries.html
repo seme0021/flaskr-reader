@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
   {% if session.logged_in %}
-    <form action="{{ url_for('show_stories') }}" method=post class=show-story>
+    <form action="{{ url_for('show_stories', sid=10) }}" method=post class=show-story>
     <div style="display: none;">3</div>
     <select name="stories">
        {% for i in entries['idlist'][0] %}
@@ -12,7 +12,7 @@
 	<div id="box-4-3" class="box">
            {% for i in range(1,7) %}
 		<div id="story">
-                <a href="{{ url_for('abridged', sid = entries['idlist'][0][i]) }}" style="text-decoration: none">
+                <a href="{{ url_for('show_stories', sid = entries['idlist'][0][i]) }}" style="text-decoration: none">
                     <h4> {{r.smembers('news:nytimes:%s:headline' % entries['idlist'][0][i]).pop().replace("[","").replace("]","").decode('utf-8') }} </h4>
                     <p> {{r.smembers('news:nytimes:%s:paragraph_1' % entries['idlist'][0][i]).pop().replace("[","").replace("]","").decode('utf-8')[:250] + "..." }} </p>
               </a> </div>
@@ -21,7 +21,7 @@
         <div id="box-4-3" class="box">
            {% for i in range(8,15) %}
                 <div id="story">
-                   <a href="{{ url_for('abridged', sid = entries['idlist'][0][i]) }}" style="text-decoration: none">
+                   <a href="{{ url_for('show_stories', sid = entries['idlist'][0][i]) }}" style="text-decoration: none">
                     <h4> {{r.smembers('news:nytimes:%s:headline' % entries['idlist'][0][i]).pop().replace("[","").replace("]","").decode('utf-8') }} </h4>
                     <p> {{r.smembers('news:nytimes:%s:paragraph_1' % entries['idlist'][0][i]).pop().replace("[","").replace("]","").decode('utf-8')[:250] + "..." }} </p>
                </a>
@@ -31,7 +31,7 @@
 	<div id="box-4-3" class="box">
            {% for i in range(16,23) %}
                 <div id="story">
-                   <a href="{{ url_for('abridged', sid = entries['idlist'][0][i]) }}" style="text-decoration: none">
+                   <a href="{{ url_for('show_stories', sid = entries['idlist'][0][i]) }}" style="text-decoration: none">
                     <h4> {{r.smembers('news:nytimes:%s:headline' % entries['idlist'][0][i]).pop().replace("[","").replace("]","").decode('utf-8') }} </h4>
                     <p> {{r.smembers('news:nytimes:%s:paragraph_1' % entries['idlist'][0][i]).pop().replace("[","").replace("]","").decode('utf-8')[:250] + "..." }} </p>
                </a> </div>
