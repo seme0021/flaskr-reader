@@ -1,5 +1,5 @@
 import redis,re,operator, numpy as nm,csv, os
-from collections import Counter
+from collections import defaultdict
 
 #redis configuration
 REDIS_DB = 1
@@ -30,6 +30,12 @@ def get_parameters(sid,pid,n_pid,c,paragraph):
 def get_capital_words(str):
     return re.findall(r'(?<!\.\s)\b[A-Z][a-z]*\b', str)
 
+#Function: Gets most common, takes list [key,count] as input
+def most_common(d,n):
+    list = sorted(d, key=lambda d: -d[1])[:n]
+    return list
+
+
 #Function: Get most frequent capital words
 def most_freq(sid):
     np = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
@@ -41,9 +47,13 @@ def most_freq(sid):
         for word in caps:
             if word not in w_ignore:
                w_caps.append(word)
-    w_freqs = Counter(w_caps)
+
+    w_freqs = defaultdict(int)
+    for word in w_caps:
+       w_freqs[word] += 1
+    d=w_freqs.items()[0]
     c={}
-    for word, count in w_freqs.most_common(4):
+    for word, count in most_common(d,4):
         if count>1:
            c[word] =  int(count)
     return c
