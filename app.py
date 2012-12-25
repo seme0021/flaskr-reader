@@ -58,12 +58,9 @@ def submit_score():
 
 @app.route('/story/<int:sid>', methods = ['POST','GET'])
 def abridged(sid):
-   print "1. abridged"
    entries = {'sid':[],'top5':[]}
    story = process_story(sid)
-   print "2. got stories"
    t =top5(story)
-   print "3. got top 5"
    entries['sid'].append(sid)
    for i in t:
       entries['top5'].append(i[0])
@@ -98,7 +95,13 @@ def read_stories():
    for key in cur_keys:
        entries['cur_ids'].append(key.split(':')[2])
    idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
-   alllist = list(r.smembers('news:nytimes:sid'))
+   #Add current stories in alllist
+   alllist=list()
+   active = r.keys("news:active:*")
+   for item in active:
+       sid=item.split(":")[2]
+       alllist.append(sid)
+   alllist.sort()
    entries['idlist'].append(idlist)
    entries['alllist'].append(alllist)
    print "read_stories()"
