@@ -47,11 +47,10 @@ def most_freq(sid):
         for word in caps:
             if word not in w_ignore:
                w_caps.append(word)
-
     w_freqs = defaultdict(int)
     for word in w_caps:
        w_freqs[word] += 1
-    d=w_freqs.items()[0]
+    d=w_freqs.items()
     c={}
     for word, count in most_common(d,4):
         if count>1:

@@ -58,11 +58,12 @@ def submit_score():
 
 @app.route('/story/<int:sid>', methods = ['POST','GET'])
 def abridged(sid):
-   print "abridged"
+   print "1. abridged"
    entries = {'sid':[],'top5':[]}
-   print str(sid)
    story = process_story(sid)
+   print "2. got stories"
    t =top5(story)
+   print "3. got top 5"
    entries['sid'].append(sid)
    for i in t:
       entries['top5'].append(i[0])
