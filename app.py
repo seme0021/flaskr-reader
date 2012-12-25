@@ -49,7 +49,7 @@ def show_stories(sid):
 def submit_score():
    sid = request.form['sid']
    uid = session.get('uid')
-   r.sadd('user:%s:read:sids' % 1, sid)
+   r.sadd('user:%s:read:sids' % uid, sid)
    nst = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
    for i in range(1,nst):
       score = request.form['%s:paragraph_%s' % (sid,i)]
@@ -75,8 +75,6 @@ def read_abridged():
       abort(401)
    sid = request.form['abr-stories']
    entries = {'sid':[],'top5':[]}
-
-   print str(sid)
    story = process_story(sid)
    t =top5(story)
    entries['sid'].append(sid)
