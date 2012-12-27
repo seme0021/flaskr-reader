@@ -7,6 +7,7 @@ from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 from score_story import get_parameters,score,process_story,top5
 
+
 # configuration
 SECRET_KEY = 'development key'
 REDIS_DB = 1
@@ -23,9 +24,30 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 def show_entries():
     uid = session.get('uid')
     entries = {'idlist':[],'alllist':[]}
+    #temporary: get cnn keys
+    keys_cnn = r.keys("news:cnn:*:headline")
+    list_cnn = list()
+    for key in keys_cnn:
+        k=int(key.split(":")[2])
+        list_cnn.append(k)
 
-    idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
-    alllist = list(r.smembers('news:nytimes:sid'))
+    id_avail = map(int,list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid)))
+    id_avail.sort()
+    id_avail.reverse()
+    l_id=len(id_avail)
+    idlist=list()
+    done = False
+    i=0
+    while not done:
+        #temporary check if nytimes story exists and add
+        key=id_avail[i]
+        i+=1
+        if key not in list_cnn:
+            idlist.append(int(key))
+            if len(idlist)==30:
+                done=True
+
+    alllist = map(int,list(r.smembers('news:nytimes:sid')))
     entries['idlist'].append(idlist)
     entries['alllist'].append(alllist)
     print entries['idlist']
@@ -87,22 +109,29 @@ def read_abridged():
 @app.route('/all')
 def read_stories():
    uid = session.get('uid')
-   entries = {'idlist':[],'alllist':[],'cur_ids':[]}
+   #temporary: get cnn keys
+   keys_cnn = r.keys("news:cnn:*:headline")
+   list_cnn = list()
+   for key in keys_cnn:
+       k=int(key.split(":")[2])
+       list_cnn.append(k)
+   list_cnn.append(305)
+   entries = {'cur_ids':[]}
    #Get current stories
    cur_keys = r.keys("news:active:*")
+   cur_keys_list = list()
    for key in cur_keys:
-       entries['cur_ids'].append(key.split(':')[2])
-   idlist = list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid))
-   #Add current stories in alllist
-   alllist=list()
-   active = r.keys("news:active:*")
-   for item in active:
-       sid=item.split(":")[2]
-       alllist.append(sid)
-   alllist.sort()
-   entries['idlist'].append(idlist)
-   entries['alllist'].append(alllist)
+       val = int(key.split(':')[2])
+       if val != 305:
+          cur_keys_list.append(val)
+
+   cur_keys_list = map(int,list(set(cur_keys_list) - set(list_cnn)))
+   cur_keys_list.sort()
+   cur_keys_list.reverse()
+
+   entries['cur_ids'].append(cur_keys_list)
    print "read_stories()"
+   print cur_keys_list
    return render_template('show_all_stories.html', entries=entries, r = r)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -125,6 +154,11 @@ def logout():
     session.pop('logged_in', None)
     flash('You were logged out')
     return redirect(url_for('show_entries'))
+
+@app.route('/home')
+def homepage():
+    error = None
+    return render_template('homepage.html', error=error)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
