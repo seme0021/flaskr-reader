@@ -95,20 +95,20 @@ def get_pop_score(paragraph,c):
     return o_v
 
 def score(parameters,modelid):
-    #Estimate Std. Error t value Pr(>|t|)
-    #(Intercept)                   -0.16611    0.19480  -0.853 0.394899
-    #as.numeric(df$nrm_pid)        -0.35418    0.09454  -3.746 0.000237 ***
-    #log(as.numeric(df$n_words))    0.32188    0.05476   5.878 1.82e-08 ***
-    #as.numeric(df$has_stats)       0.06146    0.06264   0.981 0.327815 <<Leaving in for testing purposes
-    #as.numeric(df$pop_score)       0.06096    0.02660   2.292 0.023019 *
-    #as.numeric(df$quote_npop_flg)  0.19587    0.10759   1.821 0.070236
+    #                                Estimate  Std. Error t value Pr(>|t|)
+    #(Intercept)                     -0.06168    0.18046  -0.342   0.7329
+    #as.numeric(df$nrm_pid)          -0.38270    0.08966  -4.268 2.97e-05 ***
+    #log(as.numeric(df$n_words) + 1)  0.29227    0.04984   5.864 1.70e-08 ***
+    #as.numeric(df$has_stats)         0.11143    0.05961   1.869   0.0629 .
+    #as.numeric(df$pop_score)         0.06439    0.02510   2.565   0.0110 *
+    #as.numeric(df$quote_npop_flg)    0.20685    0.10542   1.962   0.0511 .
 
    score = {'sid':[],'pid':[],'score':[]}
    if modelid == 0:
-      score_i = -0.16611 + float(parameters['nrm_pid'][0])*float(-0.35418) + float(parameters['n_words'][0])*float(0.32188)+ float(parameters['has_stats'][0])*float(0.06146) + float(parameters['pop_score'][0])*float(0.06096) + float(parameters['quote_npop_flg'][0])*float(0.19587)
+      score_i = -0.06168 + float(parameters['nrm_pid'][0])*float(-0.38270) + float(parameters['n_words'][0])*float(0.29227)+ float(parameters['has_stats'][0])*float(0.11143) + float(parameters['pop_score'][0])*float(0.06439) + float(parameters['quote_npop_flg'][0])*float(0.20685)
       #rule1: always keep first paragraph
       if parameters['pid'][0] == 1:
-         score_i = score_i + 20 
+         score_i += 20
       score['sid'].append(parameters['sid'][0])
       score['pid'].append(parameters['pid'][0])
       score['score'].append(score_i)
@@ -128,7 +128,7 @@ def build_rnd_dsn(path,file,l_time):
    os.chdir(path)
    with open(file, "wb") as csvfile:
        pw = csv.writer(csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL)
-       pw.writerow(['hash'] + ['uid'] + ['sid'] + ['pid'] + ['nrm_pid'] + ['n_words'] + ['has_stats'] + ['pop_score'] + ['recency_flg'] + ['quote_flg'] + ['quote_len'] + ['y_score'])
+       pw.writerow(['hash'] + ['uid'] + ['sid'] + ['pid'] + ['nrm_pid'] + ['n_words'] + ['has_stats'] + ['pop_score'] + ['recency_flg'] + ['quote_flg'] + ['quote_len'] + ['quote_npop_flg'] + ['y_score'])
    #Itterate over read keys
    for key in keys:
       user=int(key.split(":")[2])
@@ -143,7 +143,7 @@ def build_rnd_dsn(path,file,l_time):
       s=r.smembers("nytimes:usps:%s:%s:%s" % (user,sid,pid))
       #Write row to csv
       pw = open(file, "a")
-      row = str(hash) + "," + str(user) + "," + str(sid) + "," + str(pid) + "," + str(p['nrm_pid'][0]) + "," + str(p['n_words'][0]) + "," + str(p['has_stats'][0]) + "," + str(p['pop_score'][0]) + "," + str(p['recency_flg'][0]) + "," + str(p['quote_flg'][0]) + "," + str(p['quote_len'][0])  + "," + s.pop() + "\n"
+      row = str(hash) + "," + str(user) + "," + str(sid) + "," + str(pid) + "," + str(p['nrm_pid'][0]) + "," + str(p['n_words'][0]) + "," + str(p['has_stats'][0]) + "," + str(p['pop_score'][0]) + "," + str(p['recency_flg'][0]) + "," + str(p['quote_flg'][0]) + "," + str(p['quote_len'][0]) + "," + str(p['quote_npop_flg'][0])  + "," + s.pop() + "\n"
       pw.write(row)
 
 def process_story(sid):
