@@ -82,7 +82,7 @@ def load_cnn(url):
     stories={'id':[],'headline':[],'type':[], 'inurl':[],'outurl':[],'paragraph':[]}
     for p in paragraphs:
         try:
-            paragraph = p.xpath('text()').pop()
+            paragraph = p.xpath('text()')[0]
             stories['id'].append(i)
             stories['headline'].append(headline)
             stories['type'].append(type)

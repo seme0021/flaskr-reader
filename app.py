@@ -41,7 +41,8 @@ def show_entries():
     while not done:
         key=id_avail[i]
         i+=1
-        idlist.append(int(key))
+        if key != 567:
+           idlist.append(int(key))
         if len(idlist)==60:
            done=True
     idlist.sort()
@@ -115,9 +116,10 @@ def read_stories():
    #Get current stories
    cur_keys = r.keys("item:active:*")
    cur_keys_list = list()
+   bad_stories = [305,567]
    for key in cur_keys:
        val = int(key.split(':')[2])
-       if val != 305:
+       if val not in bad_stories:
           cur_keys_list.append(val)
 
    cur_keys_list = list(set(cur_keys_list))
