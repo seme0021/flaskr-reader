@@ -2,11 +2,11 @@
 {% block body %}
    <div id="abridged-article">
       <h2>
-         <a href="{{ r.smembers('news:nytimes:%s:url' % entries['sid'][0]).pop().replace("[","").replace("]","").replace("'","")  }}"> {{ r.smembers('news:nytimes:%s:headline' % entries['sid'][0]).pop().replace("[","").replace("]","").decode('utf-8') }}</a>
+         <a href="{{ r.hget('item:news:%s' % entries['sid'][0],'outurl').replace("[","").replace("]","").replace("'","")  }}">{{ r.hget('item:news:%s' % entries['sid'][0],'headline').replace("[","").replace("]","").decode('utf-8') }}</a>
      </h2> 
   
    {% for i in entries['top5'] %}
-      <div> {{ (r.smembers('news:nytimes:%s:paragraph_%s' % (entries['sid'][0], i)).pop()).replace("[","").replace("]","").decode('utf-8').replace('\n','') }}</div>
+      <div> {{ r.get('content:%s:paragraph_%s' % (entries['sid'][0], i)).replace("[","").replace("]","").decode('utf-8').replace('\n','') }}</div>
      <div>...........</div>
    {% endfor %}
    </div>

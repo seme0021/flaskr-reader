@@ -23,33 +23,32 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 @app.route('/')
 def show_entries():
     uid = session.get('uid')
-    entries = {'idlist':[],'alllist':[]}
-    #temporary: get cnn keys
-    keys_cnn = r.keys("news:cnn:*:headline")
-    list_cnn = list()
-    for key in keys_cnn:
-        k=int(key.split(":")[2])
-        list_cnn.append(k)
+    entries = {'idlist':[]}
+    #get non-read, semi-recent stories (last 60)
+    l_read = map(int,list(r.smembers("user:%s:read:sids")))
+    l_avail = map(int,list(r.smembers("item:sids")))
+    id_avail = list(set(l_avail) - set(l_read))
 
-    id_avail = map(int,list(r.sdiff('news:nytimes:sid', 'user:%s:read:sids' %uid)))
     id_avail.sort()
     id_avail.reverse()
     l_id=len(id_avail)
+
     idlist=list()
-    done = False
+    done=False
+
+    #get the latest 60 or so stories
     i=0
     while not done:
-        #temporary check if nytimes story exists and add
         key=id_avail[i]
         i+=1
-        if key not in list_cnn:
-            idlist.append(int(key))
-            if len(idlist)==30:
-                done=True
+        idlist.append(int(key))
+        if len(idlist)==60:
+           done=True
+    idlist.sort()
+    idlist.reverse()
 
-    alllist = map(int,list(r.smembers('news:nytimes:sid')))
     entries['idlist'].append(idlist)
-    entries['alllist'].append(alllist)
+    print "show_entries()"
     print entries['idlist']
     return render_template('show_entries.html', entries=entries, r = r)
 
@@ -81,8 +80,11 @@ def submit_score():
 @app.route('/story/<int:sid>', methods = ['POST','GET'])
 def abridged(sid):
    entries = {'sid':[],'top5':[]}
+   print "1. here"
    story = process_story(sid)
+   print "2. here"
    t =top5(story)
+   print "3. here"
    entries['sid'].append(sid)
    for i in t:
       entries['top5'].append(i[0])
@@ -109,30 +111,25 @@ def read_abridged():
 @app.route('/all')
 def read_stories():
    uid = session.get('uid')
-   #temporary: get cnn keys
-   keys_cnn = r.keys("news:cnn:*:headline")
-   list_cnn = list()
-   for key in keys_cnn:
-       k=int(key.split(":")[2])
-       list_cnn.append(k)
-   list_cnn.append(305)
    entries = {'cur_ids':[]}
    #Get current stories
-   cur_keys = r.keys("news:active:*")
+   cur_keys = r.keys("item:active:*")
    cur_keys_list = list()
    for key in cur_keys:
        val = int(key.split(':')[2])
        if val != 305:
           cur_keys_list.append(val)
 
-   cur_keys_list = map(int,list(set(cur_keys_list) - set(list_cnn)))
+   cur_keys_list = list(set(cur_keys_list))
    cur_keys_list.sort()
    cur_keys_list.reverse()
 
    entries['cur_ids'].append(cur_keys_list)
+   n_stories = len(cur_keys_list)
    print "read_stories()"
    print cur_keys_list
-   return render_template('show_all_stories.html', entries=entries, r = r)
+   return render_template('show_all_stories.html', entries=entries, n=n_stories, r = r)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

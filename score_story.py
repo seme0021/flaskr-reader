@@ -66,11 +66,11 @@ def most_common(d,n):
 
 #Function: Get most frequent capital words
 def most_freq(sid):
-    np = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
+    np = len(r.keys("content:%s:paragraph_*" % sid))
     w_ignore = "The At Monday Tuesday Thursday Wednesday Thursday Friday Saturday Sunday Mr Mrs Ms In"
     w_caps = list()
     for i in range(1,np):
-        paragraph = r.smembers("news:nytimes:%s:paragraph_%s" % (sid,i)).pop()
+        paragraph = r.get("content:%s:paragraph_%s" % (sid,i))
         caps = get_capital_words(paragraph)
         for word in caps:
             if word not in w_ignore:
@@ -147,12 +147,12 @@ def build_rnd_dsn(path,file,l_time):
       pw.write(row)
 
 def process_story(sid):
-   np = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
+   np = len(r.keys("content:%s:paragraph_*" % sid))
    c = most_freq(sid)
    l_time=time()
    scores = {'sid':[],'pid':[],'score':[]}
    for i in range(1,np):
-      paragraph = r.smembers("news:nytimes:%s:paragraph_%s" % (sid,i)).pop()
+      paragraph = r.get("content:%s:paragraph_%s" % (sid,i))
       p=get_parameters(sid,i,np,c,paragraph,l_time)
       s=score(p,0)
       scores['sid'].append(s['sid'][0])
