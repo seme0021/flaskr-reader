@@ -1,12 +1,21 @@
 {% extends "layout.html" %}
 {% block body %}
        <div id="article" name="test">
-          <div name="{{entries['sid'][0]}}"><h2>{{ (r.smembers('news:nytimes:%s:headline' % entries['sid'][0]).pop()).replace("[","").replace("]","").decode('utf-8') }}</h2></div>
+          <div name="{{entries['sid'][0]}}">
+              <h2>{{ ( r.hget('item:news:%s' % entries['sid'][0],'headline') ).replace("[","").replace("]","").decode('utf-8') }}</h2>
+          </div>
 
           <form action="{{ url_for('submit_score') }}"  method=post class=submit-score>
           <div name="none" style="display: none;"><select name="sid"><option value="{{entries['sid'][0]}}">null</option></select></div>
        {% for i in range(1,entries['nst'][0]) %}
-          <div> <td> {{ (r.smembers('news:nytimes:%s:paragraph_%s' % (entries['sid'][0],i)).pop()).replace("[","").replace("]","").decode('utf-8').replace('\n','')}}</td><td><select name="{{entries['sid'][0]}}:paragraph_{{i}}"> {% for o in range(1,11) %} <option value="{{o}}">{{ o }}</option> {% endfor %}</select></td></div>
+          <div>
+              <td> {{ ( r.get('content:%s:paragraph_%s' % (entries['sid'][0],i))).replace("[","").replace("]","").decode('utf-8').replace('\n','')}}</td>
+              <td>
+                  <select name="{{entries['sid'][0]}}:paragraph_{{i}}"> {% for o in range(1,11) %}
+                     <option value="{{o}}">{{ o }}</option> {% endfor %}
+                  </select>
+              </td>
+          </div>
          <div> ........ </div>
        {% endfor %}
        <input  type=submit value="Submit Scores">

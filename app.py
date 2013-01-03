@@ -61,10 +61,11 @@ def show_stories(sid):
    if not session.get('logged_in'):
       abort(401)
    print "show stories()"
-   nst = len(r.keys("news:nytimes:%s:paragraph_*" % sid))
+   nst = len(r.keys("content:%s:paragraph_*" % sid))
    entries = {'sid':[],'nst':[]}
    entries['sid'].append(sid)
    entries['nst'].append(nst)
+   print entries
    return render_template('show_stories.html', entries = entries, r=r)
 
 @app.route('/submit', methods=['POST'])
@@ -129,7 +130,7 @@ def read_stories():
    entries['cur_ids'].append(cur_keys_list)
    n_stories = len(cur_keys_list)
    print "read_stories()"
-   print cur_keys_list
+   print entries['cur_ids']
    return render_template('show_all_stories.html', entries=entries, n=n_stories, r = r)
 
 
