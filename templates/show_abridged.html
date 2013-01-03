@@ -1,13 +1,30 @@
-{% extends "layout.html" %}
+{% extends "homepage.html" %}
 {% block body %}
-   <div id="abridged-article">
-      <h2>
-         <a href="{{ r.hget('item:news:%s' % entries['sid'][0],'outurl').replace("[","").replace("]","").replace("'","")  }}">{{ r.hget('item:news:%s' % entries['sid'][0],'headline').replace("[","").replace("]","").decode('utf-8') }}</a>
-     </h2> 
-  
-   {% for i in entries['top5'] %}
-      <div> {{ r.get('content:%s:paragraph_%s' % (entries['sid'][0], i)).replace("[","").replace("]","").decode('utf-8').replace('\n','') }}</div>
-     <div>...........</div>
-   {% endfor %}
+   <div class="abridged-page">
+           <div id="abridged-article">
+              <h2>
+                 {{ r.hget('item:news:%s' % entries['sid'][0],'headline').replace("[","").replace("]","").decode('utf-8') }}
+             </h2>
+
+           {% for i in entries['top5'] %}
+              <div> {{ r.get('content:%s:paragraph_%s' % (entries['sid'][0], i)).replace("[","").replace("]","").decode('utf-8').replace('\n','') }}</div>
+              <div>...........</div>
+           {% endfor %}
+           </div>
+       <div id="s-similar">
+           <a href="{{ r.hget('item:news:%s' % entries['sid'][0],'outurl').replace("[","").replace("]","").replace("'","")  }}">
+             <h1>Read The Full Article</h1>
+           </a>
+           <h3>Trending Stories</h3>
+
+           {% for i in range(563,568) %}
+           <div id="similar-story">
+               <a href="{{ url_for('abridged', sid =i) }}" style="text-decoration: none">
+                   <h5> {{ r.hget('item:news:%s' % i,'headline').decode('utf-8') }} </h5>
+               </a>
+           </div>
+           {% endfor %}
+       </div>
+
    </div>
 {% endblock %}
