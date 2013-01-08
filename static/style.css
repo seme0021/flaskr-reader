@@ -4,7 +4,10 @@ h1, h2          { font-family: 'Georgia', serif; margin: 0; }
 h1              { border-bottom: 2px solid #eee; }
 h2              { font-size: 1.2em; }
 
-.page           { margin: 2em auto; width: 50em; border: 5px solid #ccc;
+/*.page           { margin: 2em auto; width: 50em; border: 5px solid #ccc;
+    padding: 0.2em; background: white; height:105em; }
+*/
+.page           { margin: 2em auto; width: 50em; border: 5px solid #F7D8A9;
     padding: 0.2em; background: white; height:105em; }
 
 .abridged-page  { margin: 2em auto; width: 45em; border: 5px solid #ccc;
@@ -77,3 +80,22 @@ h2              { font-size: 1.2em; }
 #the-sticky-div.sticky { position: fixed; top: 0; }
 #content { margin-top: 100px; }
 #login {margin-left: 22em;}
+
+#tagcloud a {
+    text-decoration: none; padding-left: 3px; padding-right: 3px;
+}
+
+#tagcloud a:hover {
+    text-decoration: underline;
+}
+
+#tagcloud {
+    margin: 10px auto;
+    font: 75% Arial, "MS Trebuchet", sans-serif;
+}
+
+#tag-content {padding-left: 2%; padding-right: 2%; border: 1px solid #ccc; width:96%; height: 12em; }
+
+#home-1 {float: left; width:30%; height: 20em; margin-left: 2%; margin-right: 2%; border: 1px solid #ccc; margin-top: 10px; background: #FDC980;}
+#home-2 {float: left; width:30%; height: 20em; margin-right: 2%; border: 1px solid #ccc; margin-top: 10px; background: #FF9900;}
+#home-3 {float: left; width:30%; height: 20em; margin-right: 2%; border: 1px solid #ccc; margin-top: 10px; background: #F27704;}

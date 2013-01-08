@@ -5,7 +5,7 @@ from contextlib import closing
 import redis
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
-from score_story import get_parameters,score,process_story,top5
+from score_story import get_parameters,score,process_story,top5,pop_today,get_pop_terms
 
 
 # configuration
@@ -157,8 +157,9 @@ def logout():
 
 @app.route('/home')
 def homepage():
+    pop_list = pop_today()
     error = None
-    return render_template('homepage.html', error=error)
+    return render_template('home.html', l=pop_list, error=error)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
