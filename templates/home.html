@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block body %}
+{% if session.logged_in %}
+<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ url_for('static',filename='jquery.tagcloud.0-0-1.js') }}" type="text/javascript"></script>
+<div id="tag-content">
+    <div id="tagcloud">
+        <div>
+            <h3>Trending Slices of News:</h3>
+        </div>
+        {% for term in l %}
+           <a href="#" rel="{{ term[1] }}"> {{ term[0] }}</a>
+
+        {% endfor %}
+    </div>
+</div>
+<div id="home-1">
+    We Peel the articles for you.
+</div>
+<div id="home-2">
+    Show you the juicest slices of the story.
+</div>
+<div id="home-3">
+    Allow you to taste more stories before committing to reading the whole thing.
+</div>
+<script>
+    $.fn.tagcloud.defaults = {
+        size: {start: 14, end: 20, unit: 'pt'},
+        color: {start: '#cde', end: '#f52'}
+    };
+
+    $(function () {
+        $('#tagcloud a').tagcloud();
+    });
+
+</script>
+
+{% endif %}
+{% endblock %}
