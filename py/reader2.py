@@ -43,6 +43,94 @@ def add_stories2redis(s,type,sid,act):
         j+=1
 
 
+def get_pop_terms(p):
+    words = p.split(" ")
+    terms = list()
+    skip=False
+    for i in range(0,len(words)-1):
+        if words[i][:1].isupper() and skip==False:
+            #check if this is a multi-word term
+            if i != len(words):
+                if words[i+1][:1].isupper():
+                    word = words[i] + " " + words[i+1]
+                    terms.append(word)
+                    skip=True
+                elif i+1 < len(words):
+                    word = words[i]
+                    terms.append(word)
+            elif i>=len(words):
+                word = words[i]
+                terms.append(word)
+        elif skip:
+            skip=False
+    return terms
+
+def get_pop_hd_terms(p):
+    words = p.split(" ")
+    terms = list()
+    skip=False
+    for i in range(0,len(words)-1):
+        if words[i][:1].isupper() and skip==False:
+            #check if this is a multi-word term
+            if i != len(words):
+                word = words[i]
+                terms.append(word)
+            elif i>=len(words):
+                word = words[i]
+                terms.append(word)
+        elif skip:
+            skip=False
+    return terms
+
+
+def update_pop():
+    if rd.exists("active:pop:schema")==0:
+        rd.set("active:pop:schema",0)
+    schema = int(rd.get("active:pop:schema")) + 1
+    keys = rd.keys("item:active*")
+    w_ignore = "Then Not A By The More While Even After At To On She Some One Monday Tuesday Thursday Wednesday Thursday Friday Saturday Sunday As I When His Mr Mrs Ms In New It But N This Dr There That They And If He For"
+    for key in keys:
+        sid = int(key.split(":")[2])
+        pkeys = rd.keys("content:%s:paragraph_*" % sid)
+        #Process Headline Pop Terms
+        headline = rd.hget("item:news:%s" % sid,'headline')
+        hp = get_pop_hd_terms(headline.replace("'",""))
+        for i in hp:
+            if i not in w_ignore:
+                if rd.exists("active:pop:%s:%s" % (schema,i)) == 0:
+                    rd.hmset("active:pop:%s:%s" % (schema,i), {"term":i,"cnt":1,"sids":str(sid)})
+                elif rd.exists("active:pop:%s:%s" % (schema,i)) == 1:
+                    cnt=int(rd.hget("active:pop:%s:%s" % (schema,i),"cnt"))+1
+                    sids = rd.hget("active:pop:%s:%s" % (schema,i),"sids")
+                    if str(sid) not in sids:
+                        sids += "," + str(sid)
+                    rd.hset("active:pop:%s:%s" % (schema,i),"cnt",int(cnt))
+                    rd.hset("active:pop:%s:%s" % (schema,i),"sids",str(sids))
+
+        for pk in pkeys:
+            p = rd.get(pk).decode('utf-8')
+            for i in get_pop_terms(p):
+                if i not in w_ignore:
+                    if rd.exists("active:pop:%s:%s" % (schema,i)) == 0:
+                        rd.hmset("active:pop:%s:%s" % (schema,i), {"term":i,"cnt":1,"sids":str(sid)})
+                    elif rd.exists("active:pop:%s:%s" % (schema,i)) == 1:
+                        cnt=int(rd.hget("active:pop:%s:%s" % (schema,i),"cnt"))+1
+                        sids = rd.hget("active:pop:%s:%s" % (schema,i),"sids")
+                        if str(sid) not in sids:
+                            sids += "," + str(sid)
+                        rd.hset("active:pop:%s:%s" % (schema,i),"cnt",int(cnt))
+                        rd.hset("active:pop:%s:%s" % (schema,i),"sids",str(sids))
+    rd.set("active:pop:schema",schema)
+    #Clean-Up Keys Where count=1
+    keys = rd.keys("active:pop:%s" % schema)
+    for key in keys:
+        try:
+            cnt = rd.hget(key,'cnt')
+            if cnt == 1:
+                rd.delete(key)
+        except:
+            pass
+
 def reader(twitter,n):
     for act in twitter:
         print "Reading Twitter Feed From: " + act
@@ -65,7 +153,6 @@ def reader(twitter,n):
                 except:
                     print "Story Failed"
 
-
             #Process cnn stories
             elif act=="cnn":
                 try:
@@ -77,6 +164,30 @@ def reader(twitter,n):
 
                 except:
                     print "Story Failed"
+
+            #Process HuffPost Stories
+            elif act=="HuffingtonPost":
+                try:
+                    print "Reading Huffington Post Story " + story + " with sid: " + str(sid)
+                    s = get_huff(story)
+                    if s['type'][0] == "http://schema.org/Article" and rd.sismember("item:urls",s['outurl'][0]) == False:
+                        print "Adding story id to current feed"
+                        add_stories2redis(s,"news",sid,act)
+                except:
+                    print "Story Failed"
+
+            elif act=="Reuters":
+                try:
+                    print "Reading Reuters Story " + story + " with sid: " + str(sid)
+                    s=get_reuters(story)
+                    if s['type'][0] == "News" and rd.sismember("item:urls", s['outurl'][0]) == False:
+                        print "adding story id to current feed"
+                        add_stories2redis(s,"news",sid,act)
+                except:
+                    print "Story Failed"
+    update_pop()
+
+
 
 def convert_item_sids():
     old = map(int,list(rd.smembers("news:nytimes:sid")))
@@ -120,5 +231,5 @@ def convert_paragraphs():
             rd.set("content:%s:paragraph_%s" % (sid,pid), content)
 
 if __name__ == '__main__':
-    twitter=['nytimes','cnn']
+    twitter=['nytimes','cnn','HuffingtonPost']
     reader(twitter,10)

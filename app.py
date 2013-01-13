@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import with_statement
 from contextlib import closing
-import redis
+import redis,random
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
-from score_story import get_parameters,score,process_story,top5,pop_today,get_pop_terms
-
+from score_story import get_parameters,score,process_story,top5,pop_today, most_common
+from collections import defaultdict
 
 # configuration
 SECRET_KEY = 'development key'
@@ -93,6 +93,8 @@ def abridged(sid):
    print entries
    return render_template('show_abridged.html', entries = entries, r=r)
 
+
+
 #Called by: show_all_stories.html
 #Calls: show_abridged.html
 @app.route('/all', methods=['POST'])
@@ -157,9 +159,39 @@ def logout():
 
 @app.route('/home')
 def homepage():
-    pop_list = pop_today()
+    #Get top stories of today
+    d=defaultdict(int)
+    schema = int(r.get("active:pop:schema"))
+    keys = r.keys("active:pop:%s:*" % schema)
+    for key in keys:
+        term = r.hget(key,'term')
+        cnt = r.hget(key,'cnt')
+        sids = r.hget(key,'sids')
+        d[term] = int( (int(len(sids.split(",")))*0.75) + (int(cnt)*0.25))
+    popl = d.items()
+    pop25 = most_common(popl,40)
+    random.shuffle(pop25)
+    print pop25
     error = None
-    return render_template('home.html', l=pop_list, error=error)
+    return render_template('home.html', l=pop25, error=error)
+
+@app.route('/term/<term>')
+def term_results(term):
+    print term
+    schema = int(r.get("active:pop:schema"))
+    sids = r.hget("active:pop:%s:%s" % (schema,term),'sids').split(",")
+    cur_keys_list=list()
+    entries = {'cur_ids':[]}
+    for sid in sids:
+        cur_keys_list.append(sid)
+    cur_keys_list = list(set(cur_keys_list))
+    cur_keys_list.sort()
+    cur_keys_list.reverse()
+    entries['cur_ids'].append(cur_keys_list)
+    n_stories = len(cur_keys_list)
+
+    print entries
+    return render_template('show_all_stories.html', entries=entries, n=n_stories, r = r)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

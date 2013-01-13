@@ -169,42 +169,27 @@ def top5(scores):
    top5.sort()
    return top5
 
+
+def del_active_schema(id):
+    keys = r.keys("active:pop:%s:*" % id)
+    for key in keys:
+        r.delete(key)
+
 def pop_today():
-    keys = r.keys("content:*:paragraph_*")
-    #keys = r.keys("item:news:*")
-    w_ignore = "The More While Even After At On She Some One Monday Tuesday Thursday Wednesday Thursday Friday Saturday Sunday As I When His Mr Mrs Ms In New It But N This Dr There That They And If He For"
-    pair_i = ['White']
-    pair_ij = dict()
-    pair_ij["White"]="House"
+    keys = r.keys("*active*")
+    w_ignore = "The More While Even After At To On She Some One Monday Tuesday Thursday Wednesday Thursday Friday Saturday Sunday As I When His Mr Mrs Ms In New It But N This Dr There That They And If He For"
+
     pop = defaultdict(int)
     for key in keys:
-        p = r.get(key).decode('utf-8')
-        for i in get_pop_terms(p):
-            if i not in w_ignore:
-               pop[i]+=1
+        sid = int(key.split(":")[2])
+        pkeys = r.keys("content:%s:paragraph_*" % sid)
+        for pk in pkeys:
+            p = r.get(pk).decode('utf-8')
+            for i in get_pop_terms(p):
+                if i not in w_ignore:
+                   pop[i]+=1
     popl = pop.items()
     pop25 = most_common(popl,35)
     random.shuffle(pop25)
     return pop25
 
-def get_pop_terms(p):
-    words = p.split(" ")
-    terms = list()
-    skip=False
-    for i in range(0,len(words)-1):
-        if words[i][:1].isupper() and skip==False:
-            #check if this is a multi-word term
-            if i != len(words):
-                if words[i+1][:1].isupper():
-                   word = words[i] + " " + words[i+1]
-                   terms.append(word)
-                   skip=True
-                elif i+1 < len(words):
-                    word = words[i]
-                    terms.append(word)
-            elif i>=len(words):
-                word = words[i]
-                terms.append(word)
-        elif skip:
-            skip=False
-    return terms

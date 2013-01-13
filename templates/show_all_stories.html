@@ -5,7 +5,7 @@
 <div id="container-4">
     <div id="box-4-3" class="box">
         {% for i in range(0,8) %}
-        {% if i < (n-1) %}
+        {% if i <= (n-1) %}
             <div id="story">
                 <a href="{{ url_for('abridged', sid = entries['cur_ids'][0][i]) }}" style="text-decoration: none">
                     <h4> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h4>

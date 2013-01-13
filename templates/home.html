@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 {% if session.logged_in %}
-<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ url_for('static',filename='jquery-latest.js') }}" type="text/javascript" charset="utf-8"></script>
 <script src="{{ url_for('static',filename='jquery.tagcloud.0-0-1.js') }}" type="text/javascript"></script>
 <div id="tag-content">
     <div id="tagcloud">
@@ -9,11 +9,12 @@
             <h3>Trending Slices of News:</h3>
         </div>
         {% for term in l %}
-           <a href="#" rel="{{ term[1] }}"> {{ term[0] }}</a>
+           <a href="{{ url_for('term_results', term=term[0].decode('utf-8')) }} " rel="{{ term[1] }}"> {{ term[0].decode('utf-8') }} </a>
 
         {% endfor %}
     </div>
 </div>
+<ol>
 <div id="home-1">
     We Peel the articles for you.
 </div>
@@ -34,6 +35,19 @@
     });
 
 </script>
+</ol>
+        <div id="reader_footer">
+            <ul>
+                <li class="footer-col">
+                    <h4>Learn More</h4>
+                </li>
+                <li class="footer-col">
+                    <h4>Find Stories</h4>
+                </li>
+                <li class="footer-col">Contact</li>
+
+            </ul>
+        </div>
 
 {% endif %}
 {% endblock %}

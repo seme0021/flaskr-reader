@@ -1,4 +1,5 @@
 import lxml.html,cookielib,urllib2
+from lxml import etree
 #url='http://t.co/gA1jnzsf'
 
 def getny_dtl(tree,s_getny_dtl,ps):
@@ -36,6 +37,55 @@ def load_page(url):
 
     tree = lxml.html.parse(response)
     return tree
+
+def get_reuters(url):
+    tree = load_page(url)
+    headline = tree.xpath("//h1")[0].xpath("text()")[0]
+    main_p = tree.xpath("//span[@class='focusParagraph']/p/text()")[0]
+    pg = tree.xpath("//span[@id='articleText']/p")
+    type = "News"
+    outurl = tree.xpath("//link/@href")[0]
+    stories={'id':[],'headline':[],'type':[], 'inurl':[],'outurl':[],'paragraph':[]}
+    #append first paragraph
+    stories['id'].append(1)
+    stories['headline'].append(headline)
+    stories['type'].append(type)
+    stories['inurl'].append(url)
+    stories['outurl'].append(outurl)
+    stories['paragraph'].append(main_p)
+    i=2
+    for p in pg:
+        paragraph = p.xpath("text()")[0]
+        stories['id'].append(i)
+        stories['headline'].append(headline)
+        stories['type'].append(type)
+        stories['inurl'].append(url)
+        stories['outurl'].append(outurl)
+        stories['paragraph'].append(paragraph)
+        i+=1
+    return stories
+
+def get_huff(url):
+    tree = load_page(url)
+    pg = '//div[@class="articleBody"]/p'
+    headline = tree.xpath("//h1[@class='title-news']/text()")[0]
+    headline = ' '.join(headline.split())
+    type = tree.xpath("//div[@id='news_content']/@itemtype")[0]
+    outurl=tree.xpath("//link/@href")[2]
+    i=0
+    stories={'id':[],'headline':[],'type':[], 'inurl':[],'outurl':[],'paragraph':[]}
+    for p in tree.xpath(pg):
+        etree.strip_tags(p,'a','c')
+        paragraph = "".join(p.xpath("text()"))
+        i+=1
+        stories['id'].append(i)
+        stories['headline'].append(headline)
+        stories['type'].append(type)
+        stories['inurl'].append(url)
+        stories['outurl'].append(outurl)
+        stories['paragraph'].append(paragraph)
+    return stories
+
 
 def getny(url):
    tree = load_page(url)
