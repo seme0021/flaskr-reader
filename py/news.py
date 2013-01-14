@@ -2,30 +2,18 @@ import lxml.html,cookielib,urllib2
 from lxml import etree
 #url='http://t.co/gA1jnzsf'
 
+
 def getny_dtl(tree,s_getny_dtl,ps):
     pid = 0
     for item in ps:
-        #print "1. processing " + item
         np = len(tree.xpath(item))
         for p in range(1,np+1):
             pid += 1
             paragraph = []
-            pt = tree.xpath(item + '[%s]/text()' % p)
-            #print "2. " + ''.join(pt)
-            ptl = len(pt)
-            if ptl == 1:
-                paragraph.append(pt[0])
-                #print "3. " +  pt[0]
-            elif ptl>1:
-                #print "4. N terms: " + str(ptl)
-                for i in range(0,ptl):
-                    try:
-                    #print "4. " +  pt[i] + tree.xpath(item + '[%s]/a[%s]/text()' % (p,i+1))[0]
-                        paragraph.append(pt[i] + tree.xpath(item + '[%s]/a[%s]/text()' % (p,i+1))[0])
-                    except:
-                        #print "5. " + pt[i]
-                        paragraph.append(pt[i])
-            s_getny_dtl['paragraph'].append(''.join(paragraph))
+            pt = tree.xpath(item + '[%s]' % p)[0]
+            etree.strip_tags(pt,'a','c')
+            paragraph = "".join(pt.xpath("text()"))
+            s_getny_dtl['paragraph'].append(paragraph)
             s_getny_dtl['id'].append(pid)
 
 def load_page(url):
@@ -38,63 +26,84 @@ def load_page(url):
     tree = lxml.html.parse(response)
     return tree
 
-def get_reuters(url):
+def get_reuters(url,schema):
     tree = load_page(url)
     headline = tree.xpath("//h1")[0].xpath("text()")[0]
     main_p = tree.xpath("//span[@class='focusParagraph']/p/text()")[0]
     pg = tree.xpath("//span[@id='articleText']/p")
+    try:
+        w = tree.xpath("//p[@class='byline']/text()")[0].replace("By ","").split(" and ")
+        #Add author and possibly co-author
+        if len(w) == 1:
+            schema['author'].append(w[0])
+        elif len(w) != 1:
+            schema['author'].append(w[0])
+            schema['co-author'].append(w[1])
+    except IndexError:
+        pass
     type = "News"
     outurl = tree.xpath("//link/@href")[0]
-    stories={'id':[],'headline':[],'type':[], 'inurl':[],'outurl':[],'paragraph':[]}
     #append first paragraph
-    stories['id'].append(1)
-    stories['headline'].append(headline)
-    stories['type'].append(type)
-    stories['inurl'].append(url)
-    stories['outurl'].append(outurl)
-    stories['paragraph'].append(main_p)
+    schema['id'].append(1)
+    schema['headline'].append(headline)
+    schema['type'].append(type)
+    schema['inurl'].append(url)
+    schema['outurl'].append(outurl)
+    schema['paragraph'].append(main_p)
     i=2
     for p in pg:
         paragraph = p.xpath("text()")[0]
-        stories['id'].append(i)
-        stories['headline'].append(headline)
-        stories['type'].append(type)
-        stories['inurl'].append(url)
-        stories['outurl'].append(outurl)
-        stories['paragraph'].append(paragraph)
+        schema['id'].append(i)
+        schema['headline'].append(headline)
+        schema['type'].append(type)
+        schema['inurl'].append(url)
+        schema['outurl'].append(outurl)
+        schema['paragraph'].append(paragraph)
         i+=1
-    return stories
+    return schema
 
-def get_huff(url):
+def get_huff(url,schema):
     tree = load_page(url)
     pg = '//div[@class="articleBody"]/p'
     headline = tree.xpath("//h1[@class='title-news']/text()")[0]
     headline = ' '.join(headline.split())
     type = tree.xpath("//div[@id='news_content']/@itemtype")[0]
     outurl=tree.xpath("//link/@href")[2]
+    w=tree.xpath("//a[@rel='author']/text()")[0].split(" and ")
+    #Add author and possibly co-author
+    if len(w) == 1:
+        schema['author'].append(w[0])
+    elif len(w) != 1:
+        schema['author'].append(w[0])
+        schema['co-author'].append(w[1])
     i=0
-    stories={'id':[],'headline':[],'type':[], 'inurl':[],'outurl':[],'paragraph':[]}
     for p in tree.xpath(pg):
         etree.strip_tags(p,'a','c')
         paragraph = "".join(p.xpath("text()"))
         i+=1
-        stories['id'].append(i)
-        stories['headline'].append(headline)
-        stories['type'].append(type)
-        stories['inurl'].append(url)
-        stories['outurl'].append(outurl)
-        stories['paragraph'].append(paragraph)
-    return stories
+        schema['id'].append(i)
+        schema['headline'].append(headline)
+        schema['type'].append(type)
+        schema['inurl'].append(url)
+        schema['outurl'].append(outurl)
+        schema['paragraph'].append(paragraph)
+    return schema
 
 
-def getny(url):
+def getny(url,schema):
    tree = load_page(url)
    hd = tree.xpath('//div[@id="article"]/div[1]/h1[1]/nyt_headline/text()').pop()
    pg = '//div[@class="articleBody"]/p'
    p1 = '//div[@class="articleBody"]/nyt_text/p'
    outurl = tree.xpath('/html/@itemid')[0]
    tp = tree.xpath('/html/@itemtype')
-   get_ny_stories={'id':[],'headline':[],'type':[], 'inurl':[],'outurl':[],'paragraph':[]}
+   w = tree.xpath("//span[@itemprop='name']/text()")[0].split(" and ")
+   #Add author and possibly co-author
+   if len(w) == 1:
+       schema['author'].append(w[0])
+   elif len(w) != 1:
+       schema['author'].append(w[0])
+       schema['co-author'].append(w[1])
 
    if tp[0] == "http://schema.org/NewsArticle":
       #print "Parsing Story " + url
@@ -102,25 +111,26 @@ def getny(url):
       ps=[]
       ps.append(p1)
       ps.append(pg)
-      getny_dtl(tree,get_ny_stories,ps)
-      get_ny_stories['headline'].append(hd)
+      getny_dtl(tree,schema,ps)
+      schema['headline'].append(hd)
       #Get number of pages
       pageNumbers = len(tree.xpath("//ul[@id='pageNumbers']/li[2]/a"))
       for page in range(1,pageNumbers):
           try:
               outurl_id = outurl[0] + "?pagewanted=" + str(page+1) + "&_r=0"
               tree = load_page(outurl_id)
-              getny_dtl(tree,get_ny_stories)
+              getny_dtl(tree,schema)
           except:
               print "Go to new page failed"
 
-      get_ny_stories['inurl'].append(url)
-      get_ny_stories['outurl'].append(outurl)
-      get_ny_stories['type'].append(tp)
-      return get_ny_stories
+      schema['inurl'].append(url)
+      schema['outurl'].append(outurl)
+      schema['type'].append(tp)
+      schema['author'].append(w)
+      return schema
 
 #load cnn page
-def load_cnn(url):
+def load_cnn(url,schema):
     tree = load_page(url)
     h_xpath='//h1/text()'
     pg_xpath='//*[@id="cnnContentContainer"]/div[4]/p'
@@ -128,18 +138,24 @@ def load_cnn(url):
     paragraphs = tree.xpath(pg_xpath)
     type=tree.xpath('/html/@itemtype')[0]
     outurl=tree.xpath('/html/head/meta[22]/@content')[0]
+    w=tree.xpath("//div[@class='cnnByline']/strong/text()")[0].split(" and ")
+    #Add author and possibly co-author
+    if len(w) == 1:
+        schema['author'].append(w[0])
+    elif len(w) != 1:
+        schema['author'].append(w[0])
+        schema['co-author'].append(w[1])
     i=0
-    stories={'id':[],'headline':[],'type':[], 'inurl':[],'outurl':[],'paragraph':[]}
     for p in paragraphs:
         try:
             paragraph = p.xpath('text()')[0]
-            stories['id'].append(i)
-            stories['headline'].append(headline)
-            stories['type'].append(type)
-            stories['inurl'].append(url)
-            stories['outurl'].append(outurl)
-            stories['paragraph'].append(paragraph)
+            schema['id'].append(i)
+            schema['headline'].append(headline)
+            schema['type'].append(type)
+            schema['inurl'].append(url)
+            schema['outurl'].append(outurl)
+            schema['paragraph'].append(paragraph)
             i += 1
         except:
             print "no text found"
-    return stories
+    return schema

@@ -82,11 +82,8 @@ def submit_score():
 @app.route('/story/<int:sid>', methods = ['POST','GET'])
 def abridged(sid):
    entries = {'sid':[],'top5':[]}
-   print "1. here"
    story = process_story(sid)
-   print "2. here"
    t =top5(story)
-   print "3. here"
    entries['sid'].append(sid)
    for i in t:
       entries['top5'].append(i[0])
@@ -191,7 +188,7 @@ def term_results(term):
     n_stories = len(cur_keys_list)
 
     print entries
-    return render_template('show_all_stories.html', entries=entries, n=n_stories, r = r)
+    return render_template('show_keyword_stories.html', entries=entries, n=n_stories, r = r)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
