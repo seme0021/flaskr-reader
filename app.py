@@ -5,7 +5,7 @@ from contextlib import closing
 import redis,random
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
-from score_story import get_parameters,score,process_story,top5,pop_today, most_common
+from py.score_story import get_parameters,score,process_story,top5,pop_today, most_common
 from collections import defaultdict
 
 # configuration
@@ -38,10 +38,11 @@ def show_entries():
 
     #get the latest 60 or so stories
     i=0
+    bad_stories = [305,567,967,968,966,969,988,989,985,984,983,982,1087,1086]
     while not done:
         key=id_avail[i]
         i+=1
-        if key != 567:
+        if key not in bad_stories:
            idlist.append(int(key))
         if len(idlist)==60:
            done=True
@@ -85,10 +86,11 @@ def abridged(sid):
    story = process_story(sid)
    t =top5(story)
    entries['sid'].append(sid)
+   related = list(r.smembers("item:similar:%s" % sid))
    for i in t:
       entries['top5'].append(i[0])
    print entries
-   return render_template('show_abridged.html', entries = entries, r=r)
+   return render_template('show_abridged.html', entries = entries, rel=related, r=r)
 
 
 
@@ -116,7 +118,7 @@ def read_stories():
    #Get current stories
    cur_keys = r.keys("item:active:*")
    cur_keys_list = list()
-   bad_stories = [305,567]
+   bad_stories = [305,567,967,968,966,969,988,989,985,984,983,982,1087,1086]
    for key in cur_keys:
        val = int(key.split(':')[2])
        if val not in bad_stories:
@@ -166,7 +168,7 @@ def homepage():
         sids = r.hget(key,'sids')
         d[term] = int( (int(len(sids.split(",")))*0.75) + (int(cnt)*0.25))
     popl = d.items()
-    pop25 = most_common(popl,40)
+    pop25 = most_common(popl,60)
     random.shuffle(pop25)
     print pop25
     error = None

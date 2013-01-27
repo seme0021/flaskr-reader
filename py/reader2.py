@@ -1,11 +1,11 @@
 #!/usr/bin/python
+from string import lower
 from Feed import *
 from news import *
 import lxml.html, simplejson,urllib2,redis
+from similar_story import *
 
 rd = redis.StrictRedis(host="localhost",port=6379, db=1)
-
-
 
 def get_max_sid():
     #1.1: Get sid
@@ -18,16 +18,8 @@ def get_max_sid():
     return sid
 
 def add_stories2redis(s,type,sid,act):
-    #1.2: Add to known sids
-    print "Adding Story to Redis Permanent DB"
-    rd.sadd("item:sids", sid)
-
-    #1.3: Add to active sids
-    rd.set("item:active:%s" % sid, sid)
-    rd.expire("item:active:%s" % sid, 86400)
-
     #1.4: Story Metadata
-    rd.hmset("item:%s:%s" % (type,sid),{"sid":sid,'type':type,'source':act,'inurl':s['inurl'][0],'outurl':s['outurl'][0],'headline':s['headline'][0]})
+    rd.hmset("item:%s:%s" % (type,sid),{"sid":sid,'type':type,'source':act,'inurl':s['inurl'][0],'outurl':s['outurl'][0],'headline':s['headline'][0],'author':s['author'][0]})
 
     #1.5: Add to source sids
     rd.sadd("item:%s:%s:sids" % (type,act),sid)
@@ -41,6 +33,14 @@ def add_stories2redis(s,type,sid,act):
     for pgf in s['paragraph']:
         rd.set("content:%s:paragraph_%s" % (sid, j), ''.join(pgf).replace('\n',''))
         j+=1
+
+    #1.2: Add to known sids
+    print "Adding Story to Redis Permanent DB"
+    rd.sadd("item:sids", sid)
+
+    #1.3: Add to active sids
+    rd.set("item:active:%s" % sid, sid)
+    rd.expire("item:active:%s" % sid, 86400)
 
 
 def get_pop_terms(p):
@@ -96,7 +96,7 @@ def update_pop():
         headline = rd.hget("item:news:%s" % sid,'headline')
         hp = get_pop_hd_terms(headline.replace("'",""))
         for i in hp:
-            i=i.decode('utf-8').replace(",","").replace("\"","").replace(":","").replace('"','')
+            i=i.decode('utf-8').replace(",","").replace("\"","").replace(":","").replace('"','').replace(")","").replace("(","")
             if i not in w_ignore:
                 if rd.exists("active:pop:%s:%s" % (schema,i)) == 0:
                     rd.hmset("active:pop:%s:%s" % (schema,i), {"term":i,"cnt":1,"sids":str(sid)})
@@ -111,7 +111,7 @@ def update_pop():
         for pk in pkeys:
             p = rd.get(pk)
             for i in get_pop_terms(p):
-                i=i.decode('utf-8').replace(",","").replace('"','').replace("\"","").replace(":","")
+                i=i.decode('utf-8').replace(",","").replace('"','').replace("\"","").replace(":","").replace(")","").replace("(","")
                 if i not in w_ignore:
                     if rd.exists("active:pop:%s:%s" % (schema,i)) == 0:
                         rd.hmset("active:pop:%s:%s" % (schema,i), {"term":i,"cnt":1,"sids":str(sid)})
@@ -187,7 +187,41 @@ def reader(twitter,n):
                         add_stories2redis(s,"news",sid,act)
                 except:
                     print "Story Failed"
+
+            elif act == "nybooks":
+                try:
+                    print "Reading NYBooks Story " + story + " with sid: " + str(sid)
+                    s=load_nybooks(story,meta_stories)
+                    if s['type'][0] == "news" and rd.sismember("item:urls", s['outurl'][0]) == False:
+                        print "adding story id to current feed"
+                        add_stories2redis(s,"news",sid,act)
+                except:
+                    print "Story Failed"
+            elif act == "guardian":
+                try:
+                    print "Reading Guardian Story " + story + " with sid: " + str(sid)
+                    s=load_guardian(story,meta_stories)
+                    if s['type'][0] == "news" and rd.sismember("item:urls", s['outurl'][0]) == False:
+                        print "adding story id to current feed"
+                        add_stories2redis(s,"news",sid,act)
+                except:
+                    print "Story Failed"
+            elif act == "washingtonpost":
+                try:
+                    print "Reading WashPost Story " + story + " with sid: " + str(sid)
+                    s=load_washpost(story,meta_stories)
+                    if s['type'][0] == "news" and rd.sismember("item:urls", s['outurl'][0]) == False:
+                        print "adding story id to current feed"
+                        add_stories2redis(s,"news",sid,act)
+                except:
+                    print "Story Failed"
+
+
+    #Run global update scripts
+    print "Updating Popular Stories"
     update_pop()
+    print "Building Similar Stories List"
+    build_active_similar(5)
 
 def del_old_pop(schema):
     keys = rd.keys("active:pop:%s:*" % schema)
@@ -236,6 +270,24 @@ def convert_paragraphs():
             content=rd.smembers(p).pop()
             rd.set("content:%s:paragraph_%s" % (sid,pid), content)
 
+def pop_author():
+    d=defaultdict(int)
+    keys = r.keys("item:news:*")
+    for i in range(900,1095):
+        key="item:news:%s" % i
+        print key
+        sid = int(key.split(':')[2])
+        if sid > 900:
+            try:
+                author =  r.hget(key,'author').upper()
+                if len(author) >= 3:
+                    d[author] += 1
+            except:
+                pass
+    return d
+
+
 if __name__ == '__main__':
-    twitter=['nytimes','cnn','HuffingtonPost','Reuters']
+    #twitter=['nytimes','cnn','HuffingtonPost','Reuters','nybooks','guardian','washingtonpost']
+    twitter=['nytimes','cnn','Reuters','nybooks','guardian','washingtonpost']
     reader(twitter,10)

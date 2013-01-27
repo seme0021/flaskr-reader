@@ -3,27 +3,52 @@
 {% if session.logged_in %}
 <script src="{{ url_for('static',filename='jquery-latest.js') }}" type="text/javascript" charset="utf-8"></script>
 <script src="{{ url_for('static',filename='jquery.tagcloud.0-0-1.js') }}" type="text/javascript"></script>
-<div id="tag-content">
+
     <div id="tagcloud">
-        <div>
-            <h3>Trending Slices of News:</h3>
-        </div>
         {% for term in l %}
            <a href="{{ url_for('term_results', term=term[0].decode('utf-8')) }} " rel="{{ term[1] }}"> {{ term[0].decode('utf-8') }} </a>
 
         {% endfor %}
     </div>
-</div>
+
 <ol>
-<div id="home-1">
-    We Peel the articles for you.
-</div>
-<div id="home-2">
-    Show you the juicest slices of the story.
-</div>
-<div id="home-3">
-    Allow you to taste more stories before committing to reading the whole thing.
-</div>
+    <div id="home-1">
+        We scour the social web to bring you the most fresh pressed news.
+    </div>
+    <div id="home-1">
+        We peel the articles and show you the juicest slices of the story.
+    </div>
+    <div id="home-1">
+        You read more stories + Discover your favorite authors = A more knowledgeable, healthier you.
+    </div>
+
+    <div class="home-2">
+        <h3>Learn More</h3>
+        <ul><a href="#">About Us</a></ul>
+        <ul><a href="#">FAQs</a></ul>
+        <ul><a href="#">Contact Us</a></ul>
+    </div>
+    <div class="home-2">
+        <h3>News Discovery</h3>
+        <ul><a href="/all">Popular Stories</a></ul>
+        <ul><a href="#">Populart Authors</a></ul>
+        <ul><a href="#">Shorten Your Articles</a></ul>
+    </div>
+    <div class="home-2">
+        <h3>News and Blogs</h3>
+        <ul><a href="#">Slice Blog</a></ul>
+        <ul><a href="#">Who we follow</a></ul>
+        <ul><a href="#">News Trends</a></ul>
+
+    </div>
+    <div class="home-2">
+        <h3>Authors and Readers</h3>
+        <ul><a href="#">Submit your articles</a></ul>
+        <ul><a href="#">Become a reader</a></ul>
+
+    </div>
+    <div class="home-2">   </div>
+
 <script>
     $.fn.tagcloud.defaults = {
         size: {start: 14, end: 20, unit: 'pt'},
@@ -35,19 +60,10 @@
     });
 
 </script>
-</ol>
-        <div id="reader_footer">
-            <ul>
-                <li class="footer-col">
-                    <h4>Learn More</h4>
-                </li>
-                <li class="footer-col">
-                    <h4>Find Stories</h4>
-                </li>
-                <li class="footer-col">Contact</li>
 
-            </ul>
-        </div>
+</ol>
+
+
 
 {% endif %}
 {% endblock %}

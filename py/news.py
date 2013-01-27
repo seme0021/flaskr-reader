@@ -1,5 +1,6 @@
 import lxml.html,cookielib,urllib2
 from lxml import etree
+from collections import defaultdict
 #url='http://t.co/gA1jnzsf'
 
 
@@ -159,3 +160,93 @@ def load_cnn(url,schema):
         except:
             print "no text found"
     return schema
+
+def load_nybooks(url,schema):
+    tree = load_page(url)
+    h = tree.xpath("//h2/text()")[0]
+    a = tree.xpath("//h3/a/text()")[0]
+    pgs = tree.xpath("//div[@id='article-body']/p")
+    type = "news"
+    outurl = tree.xpath("//meta[@name='twitter:url']/@content")[0]
+    schema['headline'].append(h)
+    schema['author'].append(a)
+    schema['type'].append(type)
+    schema['outurl'].append(outurl)
+    schema['inurl'].append(url)
+    for p in pgs:
+        try:
+            paragraph = p.xpath("text()")[0]
+            schema['paragraph'].append(paragraph)
+        except IndexError:
+            pass
+    return schema
+
+def load_guardian(url,schema):
+    tree = load_page(url)
+    h = tree.xpath("//div[@id='main-article-info']/h1/text()")[0]
+    type = "news"
+    outurl = tree.xpath("//meta[@property='og:url']/@content")[0]
+    author=""
+    pgs = tree.xpath("//div[@id='article-body-blocks']/p")
+    schema['headline'].append(h)
+    schema['type'].append(type)
+    schema['inurl'].append(url)
+    schema['outurl'].append(outurl)
+    schema['author'].append(author)
+    i=0
+    for p in pgs:
+        etree.strip_tags(p,'a','c')
+        paragraph = "".join(p.xpath("text()"))
+        try:
+            i+=1
+            schema['id'].append(i)
+            schema['paragraph'].append(paragraph)
+        except IndexError:
+            pass
+    return schema
+
+def load_washpost(url,schema):
+    tree = load_page(url)
+    h=tree.xpath("//span[@class='entry-title']/text()")[0]
+    a=tree.xpath("//a[@rel='author']/text()")[0]
+    pgs = tree.xpath("//div[@id='article_body']/div/article/p")
+    outurl = tree.xpath("//meta[@property='og:url']/@content")[0]
+    type="news"
+    schema['headline'].append(h)
+    schema['type'].append(type)
+    schema['inurl'].append(url)
+    schema['outurl'].append(outurl)
+    schema['author'].append(a)
+    i=0
+    for p in pgs:
+        etree.strip_tags(p,'a','c')
+        paragraph = "".join(p.xpath("text()"))
+        try:
+            i+=1
+            schema['id'].append(i)
+            schema['paragraph'].append(paragraph)
+        except IndexError:
+            pass
+    return schema
+
+def find_text(url):
+    tree = load_page(url)
+    c=defaultdict(int)
+    l=defaultdict(int)
+    ps = tree.xpath("//p")
+    for p in ps:
+        e=p.getparent().tag
+        try:
+            l[e]+=len(p.xpath("text()")[0])
+        except IndexError:
+            pass
+        c[e]+=1
+    nrm=defaultdict(int)
+    print c
+    print l
+    for k,v in c.items():
+        if v > 4:
+            nrm[k] = l[k]/v
+    #decide which element, and then figure out which class or id of the element
+    return nrm
+

@@ -1,6 +1,6 @@
 import redis,re,operator, numpy as nm,csv, os, random
 from collections import defaultdict
-from py.lexicon import *
+from lexicon import *
 
 #redis configuration
 REDIS_DB = 1

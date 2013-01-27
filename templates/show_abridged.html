@@ -1,16 +1,16 @@
 {% extends "homepage.html" %}
 {% block body %}
-   <div class="abridged-page"">
+   <div class="abridged-page">
        <h1 align="center">
            {{ r.hget('item:news:%s' % entries['sid'][0],'headline').replace("[","").replace("]","").decode('utf-8') }}
        </h1>
            <div id="abridged-article">
+               {% for i in entries['top5'] %}
+                  <div> {{ r.get('content:%s:paragraph_%s' % (entries['sid'][0], i)).replace("[","").replace("]","").decode('utf-8').replace('\n','') }}</div>
+                  <div style="padding-left: 45%;">o o o o</div>
+               {% endfor %}
 
 
-           {% for i in entries['top5'] %}
-              <div> {{ r.get('content:%s:paragraph_%s' % (entries['sid'][0], i)).replace("[","").replace("]","").decode('utf-8').replace('\n','') }}</div>
-              <div style="padding-left: 45%;">o o o o</div>
-           {% endfor %}
            </div>
        <div id="s-similar">
            <a href="{{ r.hget('item:news:%s' % entries['sid'][0],'outurl').replace("[","").replace("]","").replace("'","")  }}">
@@ -21,8 +21,14 @@
                <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 
            </div>
+           <!--Add Similar Stories-->
+           {% for s in rel %}
+           <div>
+               <a href="{{ url_for('abridged', sid = s) }}">
+                   <h4>{{ r.hget('item:news:%s' % s,'headline').replace("[","").replace("]","").decode('utf-8') }}</h4>
+               </a>
+           </div>
+           {% endfor %}
        </div>
-
-
    </div>
 {% endblock %}

@@ -1,22 +1,17 @@
 <!doctype html>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Reader</title>
+<title>Slice</title>
 <script src="{{ url_for('static',filename='jquery-1.8.3.min.js') }}" type="text/javascript"></script>
 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
-<div id="navigation">
-    <a href="{{ url_for('homepage') }}">Home</a>
-    <a href="{{ url_for('read_stories')}}">Read News</a>
-    <a href="{{ url_for('show_entries')}}">Score Stories</a>
-    <a href="#">About</a>
-    {% if not session.logged_in %}
-       <a href="{{ url_for('login') }}">log in</a>
-    {% else %}
-        <a href="{{ url_for('logout') }}">log out</a>
-    {% endif %}
-</div>
-<div class=page>
-  <h1>Reader</h1>
 
+<div style="margin-left: 22%; margin-right: 22%; height: 3em; border: 0px solid #ccc;  border-radius: 10px;">
+    <a href="/home" style="text-decoration: none; font-family: Calibri; font-size: 2.8em; color: white;"><b>#sli<strong style="color: #FF9900">c</strong>e</b></a>
+    <input id="search_query" style=" margin-top: 0em; margin-top:10px; margin-left: 5em; width: 20em; height: 2em; border-radius: 10px;" type="text" autocomplete="off" placeholder="Search news"tabindex="1">
+    <a class="awesome">log in</a>
+    <a class="awesome" href="/all"> top stories </a>
+</div>
+
+<div class=page>
   {% for message in get_flashed_messages() %}
     <div class=flash>{{ message }}</div>
   {% endfor %}
