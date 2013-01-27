@@ -2,6 +2,7 @@
 *.csv
 exec.py
 images/*
+*.idea
 # C extensions
 *.so
 
