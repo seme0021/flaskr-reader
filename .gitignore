@@ -5,6 +5,7 @@ images/*
 *.idea
 # C extensions
 *.so
+*.jmp
 
 # Packages
 *.egg
