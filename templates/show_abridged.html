@@ -1,34 +1,40 @@
-{% extends "homepage.html" %}
+{% extends "layout.html" %}
 {% block body %}
+
    <div class="abridged-page">
-       <h1 align="center">
+       <h2 style="margin-left: 1em; margin-bottom: 10px; ">
+       <a style="text-decoration: none; border-left: 1px solid #FF9900; border-right: 1px solid #FF9900; border-bottom: 1px solid #FF9900;" href="/author/{{ r.hget('item:news:%s' % entries['sid'][0],'author').strip().replace(" ","-").replace(".","") }}">
+           By: {{ r.hget('item:news:%s' % entries['sid'][0],'author').decode('utf-8') }}
+       </a>
+   </h2>
+       <h1 align="center" style="margin-bottom: 0.3em;">
            {{ r.hget('item:news:%s' % entries['sid'][0],'headline').replace("[","").replace("]","").decode('utf-8') }}
        </h1>
+
            <div id="abridged-article">
                {% for i in entries['top5'] %}
                   <div> {{ r.get('content:%s:paragraph_%s' % (entries['sid'][0], i)).replace("[","").replace("]","").decode('utf-8').replace('\n','') }}</div>
-                  <div style="padding-left: 45%;">o o o o</div>
+                  <div style="padding-left: 45%; padding-top: 2px; padding-bottom: 2px;">o o o o</div>
                {% endfor %}
-
-
            </div>
        <div id="s-similar">
            <a href="{{ r.hget('item:news:%s' % entries['sid'][0],'outurl').replace("[","").replace("]","").replace("'","")  }}">
-             <h1>Read The Full Article</h1>
+             <h1 style="margin-top: 0px; border-left: 5px solid #FF9900; padding-left: 4px; border-top: 4px solid #eee; border-bottom: 4px solid #eee;">Read The Full Article</h1>
            </a>
-           <div>
-               <a class="twitter-timeline" width="250" height="400" data-dnt=true href="https://twitter.com/SMTechScene/favorites" data-widget-id="289575970694905857">Favorite Tweets by @SMTechScene</a>
-               <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 
-           </div>
            <!--Add Similar Stories-->
+            <h2>Similar Stories</h2>
+            <hr>
            {% for s in rel %}
            <div>
                <a href="{{ url_for('abridged', sid = s) }}">
-                   <h4>{{ r.hget('item:news:%s' % s,'headline').replace("[","").replace("]","").decode('utf-8') }}</h4>
+                   <h4 style="margin-bottom: 0px;">{{ r.hget('item:news:%s' % s,'headline').replace("[","").replace("]","").decode('utf-8') }}</h4>
+                   <div style="width:20%; background-color:#FF9900; height:3px; margin-top: 0px; margin-bottom: 0px;"></div>
                </a>
            </div>
            {% endfor %}
+           <hr style="margin-top: 1em;">
        </div>
    </div>
+ </div>
 {% endblock %}

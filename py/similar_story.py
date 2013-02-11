@@ -17,7 +17,7 @@ def get_capital_words(str):
     return re.findall(r'(?<!\.\s)\b[A-Z][a-z]*\b', str)
 
 def content_strip(str):
-    str = str.replace("\xe2\x80\x94","").replace(",","").replace("\"","").replace(":","").replace('"','').replace(")","").replace("(","")
+    str = str.replace("\xe2\x80\x94","'").replace("\xe2\x80\x99","'").replace(",","").replace("\"","").replace(":","").replace('"','').replace(")","").replace("(","")
     return str
 
 def get_pop_terms(p):
@@ -58,6 +58,46 @@ def get_pop_hd_terms(p):
         elif skip:
             skip=False
     return terms
+
+def tanimoto(sid,type):
+    try:
+        #Get key-terms from headline and first paragraph
+        try:
+            hd = content_strip(rd.hget("item:%s:%s" % (type,sid),'headline'))
+            p1 = content_strip(rd.get("content:%s:paragraph_1" % sid))
+        except AttributeError:
+            hd = ""
+            p1 = ""
+        terms = set(get_pop_hd_terms(hd) + get_pop_hd_terms(p1))
+        #Compute score against other active stories
+        keys = list(set(rd.keys("item:active:*")) - set(["item:active:%s" % sid]))
+        pcorr=defaultdict(int)
+        for key in keys:
+            sidk=int(key.split(":")[2])
+            try:
+                hdk = content_strip(rd.hget("item:%s:%s" % (type,sidk),'headline'))
+                p1k = content_strip(rd.get("content:%s:paragraph_1" % sidk))
+            except AttributeError:
+                hdk = ""
+                p1k = ""
+            termsk = set(get_pop_hd_terms(hdk) + get_pop_hd_terms(p1k))
+            c1,c2,shr=0,0,0
+            for w in set(list(terms) + list(termsk)):
+                if w in terms:
+                    c1+=1
+                if w in termsk:
+                    c2+=1
+                if (w in terms) and (w in termsk):
+                    shr+=1
+            score = 1.0 - (float(shr)/max(1,(c1 + c2 - shr)))
+            pcorr[sidk]=score
+        pcorrs = sorted(pcorr.iteritems(), key=operator.itemgetter(1),reverse=True)
+        return pcorrs
+    except AttributeError:
+        pass
+
+
+
 
 def find_similar(sid,type):
     try:
@@ -121,7 +161,7 @@ def build_active_similar(n):
     keys = rd.keys("item:active:*")
     for key in keys:
         sid=int(key.split(":")[2])
-        top = find_similar(sid,"news")
+        top = tanimoto(sid,"news")
         if rd.exists("item:similar:%s" % sid):
             rd.delete("item:similar:%s" % sid)
         try:
@@ -130,5 +170,119 @@ def build_active_similar(n):
         except TypeError:
             pass
 
+def pop_author():
+    d=defaultdict(int)
+    keys = rd.keys("item:news:*")
+    for i in range(900,1095):
+        key="item:news:%s" % i
+        print key
+        sid = int(key.split(':')[2])
+        if sid > 900:
+            try:
+                author =  rd.hget(key,'author').upper()
+                if len(author) >= 3:
+                    d[author] += 1
+            except:
+                pass
+    return d
+
+def author_words():
+    d={}
+    keys = rd.keys("item:news:*")
+    type = "news"
+    for key in keys:
+        try:
+            sid = int(key.split(":")[2])
+        except ValueError:
+            sid=0
+        author=None
+        if sid>700:
+            author = rd.hget(key,'author')
+        if (author) and sid>700:
+            try:
+                try:
+                    hd = get_pop_hd_terms(content_strip(rd.hget("item:%s:%s" % (type,sid),'headline')))
+                    pgs = rd.keys("content:%s:paragraph_*" % sid)
+                except AttributeError:
+                    hd = ""
+                    pgs = ""
+                words = list()
+                for p in pgs:
+                    pg = get_pop_hd_terms(content_strip(rd.get(p)))
+                    for word in pg:
+                        word = content_strip(word).split("'")[0]
+                        if (word not in w_ignore) and (len(word)>2):
+                            words.append(word)
+                terms = words + hd
+                wcnt = defaultdict(int)
+                for i in terms:
+                    wcnt[i]+=1
+                wcnt=sorted(wcnt.iteritems(), key=operator.itemgetter(1),reverse=True)[:15]
+                d[author] = wcnt
+            except AttributeError:
+                pass
+    return d
+
+def author_words2redis(d):
+    for i in d.items():
+        author = i[0].strip().replace(".","").replace(" ","-")
+        if rd.exists("author:terms:%s" % author):
+            rd.delete("author:terms:%s" % author)
+        for w,c in i[1]:
+            term = str(w) + ":" + str(c)
+            rd.sadd('author:terms:%s' % author,term)
+
+def author_schema():
+    keys = rd.keys("item:news:*")
+    for key in keys:
+        try:
+            sid = int(key.split(":")[2])
+        except ValueError:
+            sid=0
+        author=None
+        if sid>700:
+            author = rd.hget(key,'author')
+        if (author) and sid>700:
+            author=author.strip().replace(" ","-").replace(".","")
+            publication = rd.hget(key,'source')
+            rd.hmset("author:%s" % author,{'publication':publication})
+
+
+def author_story():
+    keys = rd.keys("item:news:*")
+    for key in keys:
+        try:
+            sid = int(key.split(":")[2])
+        except ValueError:
+            sid=0
+        author=None
+        if sid>700:
+            author = rd.hget(key,'author')
+        if (author) and sid>700:
+            author=author.strip().replace(" ","-").replace(".","")
+            rd.sadd("author:sids:%s" % author,sid)
+
+def get_latest_tweets(tid):
+    r = urllib2.urlopen("https://api.twitter.com/1/statuses/user_timeline.json?screen_name=" + str(tid) + "&count=" + str(10))
+    content = r.read()
+    json = simplejson.loads(content)
+    l=list()
+    for tweet in json:
+        if not tweet['in_reply_to_status_id']:
+            l.append(tweet['id_str'])
+    return l[:3]
+
+def updt_twitter_acct(author,acct):
+    rd.hset('author:%s' % author,'twitter',acct)
+
+def updt_latest_tweets(author):
+    if rd.exists('author:tweets:%s' % author):
+        rd.delete('author:tweets:%s' % author)
+    handle=rd.hget('author:%s' % author,'twitter')
+    print handle
+    tweets=get_latest_tweets(handle)
+    print tweets
+    for t in tweets:
+        rd.sadd('author:tweets:%s' % author,t)
 
 

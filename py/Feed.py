@@ -15,7 +15,7 @@ def feed(sn,n):
       items['title'].append(tweet['text'][0:end-1])
       t = tweet['text'][end+5:].find(' ')
       if t > 0:
-         items['url'].append(tweet['text'][end:t-1])
+         items['url'].append(tweet['text'][end:].split(' ')[0])
       else:
          items['url'].append(tweet['text'][end:])
    return items

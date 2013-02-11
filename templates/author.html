@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block body %}
+    <script src="{{ url_for('static',filename='jquery.tagcloud.0-0-1.js') }}" type="text/javascript"></script>
+    <div class="abridged-page">
+        <div id="abridged-article">
+            <h1>{{ a }}</h1>
+            <p>{{ a }} writes for {{ p }}. You can follow the author on twitter @SomeHash</p>
+            <p>Here is what {{ a }} writes about:</p>
+            <div>
+                <div id="termcloud">
+                    {% for term in t %}
+                        <a rel="{{ term.split(':')[1] }}"> {{ term.split(':')[0].decode('utf-8') }} </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <script>
+                $.fn.tagcloud.defaults = {
+                    size: {start: 14, end: 20, unit: 'pt'},
+                    color: {start: '#395', end: '#f52'}
+                };
+
+                $(function () {
+                    $('#termcloud a').tagcloud();
+                });
+            </script>
+            <hr width='100%'>
+            <h2 style="margin-bottom: 1px;">Recent Stories</h2>
+            {% for i in s %}
+                <h3 style="margin-top: 1px;"><a style="text-decoration:none;" href="{{ url_for('abridged', sid=i) }}"> {{ r.hget('item:news:%s' % i,'headline').decode('utf-8') }}</a></h3>
+
+            {% endfor %}
+        </div>
+        <div id="s-similar">
+            <h1 style="margin-top: 10px;">Recent Tweets</h1>
+            {% for tweet in tw.items()[0][1] %}
+                <blockquote class="twitter-tweet"> <a href="https://twitter.com/{{ tw.items()[0][0] }}/status/{{ tweet }}">January 27, 2013</a></blockquote>
+
+            {% endfor %}
+             <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+        </div>
+    </div>
+{% endblock %}

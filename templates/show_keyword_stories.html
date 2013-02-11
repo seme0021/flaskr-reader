@@ -1,7 +1,7 @@
-{% extends "homepage.html" %}
+{% extends "layout.html" %}
 {% block body %}
 {% if session.logged_in %}
-<div class="page">
+<div class="keyword_stories">
     <div id="container-4">
         <div id="box-key" class="box">
             {% for i in range(0,8) %}

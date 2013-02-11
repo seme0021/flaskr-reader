@@ -43,7 +43,7 @@ def get_reuters(url,schema):
     except IndexError:
         pass
     type = "News"
-    outurl = tree.xpath("//link/@href")[0]
+    outurl = tree.docinfo.URL
     #append first paragraph
     schema['id'].append(1)
     schema['headline'].append(headline)
@@ -53,13 +53,23 @@ def get_reuters(url,schema):
     schema['paragraph'].append(main_p)
     i=2
     for p in pg:
-        paragraph = p.xpath("text()")[0]
-        schema['id'].append(i)
-        schema['headline'].append(headline)
-        schema['type'].append(type)
-        schema['inurl'].append(url)
-        schema['outurl'].append(outurl)
-        schema['paragraph'].append(paragraph)
+        try:
+            paragraph = p.xpath("text()")[0]
+            if (paragraph[0] == '*') or (paragraph[:2] == 'By'):
+                if paragraph[:2] == 'By':
+                    author = paragraph.split('and')[0].split('By')[1].strip()
+                    #author = paragraph.split('and')[1].strip()
+                    schema['author'].append(author)
+            elif paragraph[0] != '*':
+                schema['id'].append(i)
+                schema['headline'].append(headline)
+                schema['type'].append(type)
+                schema['inurl'].append(url)
+                schema['outurl'].append(outurl)
+                schema['paragraph'].append(paragraph)
+                i+=1
+        except IndexError:
+            pass
         i+=1
     return schema
 
@@ -69,7 +79,7 @@ def get_huff(url,schema):
     headline = tree.xpath("//h1[@class='title-news']/text()")[0]
     headline = ' '.join(headline.split())
     type = tree.xpath("//div[@id='news_content']/@itemtype")[0]
-    outurl=tree.xpath("//link/@href")[2]
+    outurl=tree.docinfo.URL
     w=tree.xpath("//a[@rel='author']/text()")[0].split(" and ")
     #Add author and possibly co-author
     if len(w) == 1:
@@ -96,7 +106,7 @@ def getny(url,schema):
    hd = tree.xpath('//div[@id="article"]/div[1]/h1[1]/nyt_headline/text()').pop()
    pg = '//div[@class="articleBody"]/p'
    p1 = '//div[@class="articleBody"]/nyt_text/p'
-   outurl = tree.xpath('/html/@itemid')[0]
+   outurl = tree.docinfo.URL
    tp = tree.xpath('/html/@itemtype')
    w = tree.xpath("//span[@itemprop='name']/text()")[0].split(" and ")
    #Add author and possibly co-author
@@ -138,14 +148,14 @@ def load_cnn(url,schema):
     headline = tree.xpath(h_xpath).pop()
     paragraphs = tree.xpath(pg_xpath)
     type=tree.xpath('/html/@itemtype')[0]
-    outurl=tree.xpath('/html/head/meta[22]/@content')[0]
+    outurl=tree.docinfo.URL
     w=tree.xpath("//div[@class='cnnByline']/strong/text()")[0].split(" and ")
     #Add author and possibly co-author
     if len(w) == 1:
-        schema['author'].append(w[0])
+        schema['author'].append(w[0].replace(',',''))
     elif len(w) != 1:
-        schema['author'].append(w[0])
-        schema['co-author'].append(w[1])
+        schema['author'].append(w[0].replace(',',''))
+        schema['co-author'].append(w[1].replace(',',''))
     i=0
     for p in paragraphs:
         try:
@@ -161,13 +171,37 @@ def load_cnn(url,schema):
             print "no text found"
     return schema
 
+
+def load_ap(url,schema):
+    tree=load_page(url)
+    h=tree.xpath('//h1[@id="page-title"]/text()')[0]
+    outurl = tree.docinfo.URL
+    a=tree.xpath('//div[@class="article-data"]/div/div/div/a/text()')[0]
+    type="news"
+    pgs=tree.xpath('//p')
+    #add global vars to schema
+    schema['headline'].append(h)
+    schema['author'].append(a)
+    schema['type'].append(type)
+    schema['outurl'].append(outurl)
+    schema['inurl'].append(url)
+    for p in pgs:
+        paragraph=p.xpath('text()')
+        if len(paragraph) != 0:
+            try:
+                schema['paragraph'].append(paragraph[0])
+            except IndexError:
+                print "No Text Found"
+    return schema
+
+
 def load_nybooks(url,schema):
     tree = load_page(url)
     h = tree.xpath("//h2/text()")[0]
     a = tree.xpath("//h3/a/text()")[0]
     pgs = tree.xpath("//div[@id='article-body']/p")
     type = "news"
-    outurl = tree.xpath("//meta[@name='twitter:url']/@content")[0]
+    outurl = tree.docinfo.URL
     schema['headline'].append(h)
     schema['author'].append(a)
     schema['type'].append(type)
@@ -185,8 +219,8 @@ def load_guardian(url,schema):
     tree = load_page(url)
     h = tree.xpath("//div[@id='main-article-info']/h1/text()")[0]
     type = "news"
-    outurl = tree.xpath("//meta[@property='og:url']/@content")[0]
-    author=""
+    outurl = tree.docinfo.URL
+    author=tree.xpath('//div[@class="contributor-full"]/text()')[0].strip()
     pgs = tree.xpath("//div[@id='article-body-blocks']/p")
     schema['headline'].append(h)
     schema['type'].append(type)
@@ -210,7 +244,7 @@ def load_washpost(url,schema):
     h=tree.xpath("//span[@class='entry-title']/text()")[0]
     a=tree.xpath("//a[@rel='author']/text()")[0]
     pgs = tree.xpath("//div[@id='article_body']/div/article/p")
-    outurl = tree.xpath("//meta[@property='og:url']/@content")[0]
+    outurl = tree.docinfo.URL
     type="news"
     schema['headline'].append(h)
     schema['type'].append(type)
@@ -249,4 +283,3 @@ def find_text(url):
             nrm[k] = l[k]/v
     #decide which element, and then figure out which class or id of the element
     return nrm
-

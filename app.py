@@ -92,6 +92,22 @@ def abridged(sid):
    print entries
    return render_template('show_abridged.html', entries = entries, rel=related, r=r)
 
+@app.route('/author/<author>')
+def author(author):
+    auth = author.replace("-"," ")
+    pub=r.hget("author:%s" % author, 'publication')
+    terms = r.smembers("author:terms:%s" % author)
+    sids = r.smembers("author:sids:%s" % author)
+    handle=r.hget('author:%s' % author,'twitter')
+    tweets=list()
+    tw=dict()
+    if r.exists('author:tweets:%s' % author):
+        tids = r.smembers('author:tweets:%s' % author)
+        for t in tids:
+            tweets.append(t)
+    tw[handle] = tweets
+
+    return render_template('author.html', a=auth, p=pub, t=terms, s=sids, tw=tw, r=r)
 
 
 #Called by: show_all_stories.html
@@ -130,8 +146,6 @@ def read_stories():
 
    entries['cur_ids'].append(cur_keys_list)
    n_stories = len(cur_keys_list)
-   print "read_stories()"
-   print entries['cur_ids']
    return render_template('show_all_stories.html', entries=entries, n=n_stories, r = r)
 
 
@@ -174,7 +188,7 @@ def homepage():
     error = None
     return render_template('home.html', l=pop25, error=error)
 
-@app.route('/term/<term>')
+@app.route('/news/<term>')
 def term_results(term):
     print term
     schema = int(r.get("active:pop:schema"))

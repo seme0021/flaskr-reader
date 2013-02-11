@@ -215,13 +215,29 @@ def reader(twitter,n):
                         add_stories2redis(s,"news",sid,act)
                 except:
                     print "Story Failed"
-
-
+            elif act == "AP":
+                try:
+                    print "Reading AP Story " + story + " with sid: " + str(sid)
+                    s=load_ap(story,meta_stories)
+                    if s['type'][0] == "news" and rd.sismember("item:urls", s['outurl'][0]) == False:
+                        print "adding story id to current feed"
+                        add_stories2redis(s,"news",sid,act)
+                except:
+                    print "Story Failed"
     #Run global update scripts
     print "Updating Popular Stories"
     update_pop()
     print "Building Similar Stories List"
     build_active_similar(5)
+    print "Updating Author Key Terms"
+    a2=author_words()
+    author_words2redis(a2)
+    print "Updating author profiles"
+    author_schema()
+    author_story()
+
+
+
 
 def del_old_pop(schema):
     keys = rd.keys("active:pop:%s:*" % schema)
@@ -270,24 +286,10 @@ def convert_paragraphs():
             content=rd.smembers(p).pop()
             rd.set("content:%s:paragraph_%s" % (sid,pid), content)
 
-def pop_author():
-    d=defaultdict(int)
-    keys = r.keys("item:news:*")
-    for i in range(900,1095):
-        key="item:news:%s" % i
-        print key
-        sid = int(key.split(':')[2])
-        if sid > 900:
-            try:
-                author =  r.hget(key,'author').upper()
-                if len(author) >= 3:
-                    d[author] += 1
-            except:
-                pass
-    return d
+
 
 
 if __name__ == '__main__':
     #twitter=['nytimes','cnn','HuffingtonPost','Reuters','nybooks','guardian','washingtonpost']
-    twitter=['nytimes','cnn','Reuters','nybooks','guardian','washingtonpost']
+    twitter=['nytimes','cnn','Reuters','nybooks','guardian','washingtonpost','AP']
     reader(twitter,10)
