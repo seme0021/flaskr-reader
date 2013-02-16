@@ -105,6 +105,11 @@ def author(author):
         tids = r.smembers('author:tweets:%s' % author)
         for t in tids:
             tweets.append(t)
+    if len(tweets) == 0:
+        author = pub
+        tids = r.smembers('author:tweets:%s' % author)
+        for t in tids:
+            tweets.append(t)
     tw[handle] = tweets
 
     return render_template('author.html', a=auth, p=pub, t=terms, s=sids, tw=tw, r=r)
@@ -129,24 +134,24 @@ def read_abridged():
 #Post the non-expired story ids
 @app.route('/all')
 def read_stories():
-   uid = session.get('uid')
-   entries = {'cur_ids':[]}
-   #Get current stories
-   cur_keys = r.keys("item:active:*")
-   cur_keys_list = list()
-   bad_stories = [305,567,967,968,966,969,988,989,985,984,983,982,1087,1086]
-   for key in cur_keys:
-       val = int(key.split(':')[2])
-       if val not in bad_stories:
-          cur_keys_list.append(val)
+    uid = session.get('uid')
+    entries = {'cur_ids':[]}
+    #Get current stories
+    cur_keys = r.keys("item:active:*")
+    cur_keys_list = list()
+    bad_stories = [305,567,967,968,966,969,988,989,985,984,983,982,1087,1086]
+    for key in cur_keys:
+        val = int(key.split(':')[2])
+        if (val not in bad_stories) and (r.exists("content:%s:paragraph_1" % val)):
+            cur_keys_list.append(val)
 
-   cur_keys_list = list(set(cur_keys_list))
-   cur_keys_list.sort()
-   cur_keys_list.reverse()
+    cur_keys_list = list(set(cur_keys_list))
+    cur_keys_list.sort()
+    cur_keys_list.reverse()
 
-   entries['cur_ids'].append(cur_keys_list)
-   n_stories = len(cur_keys_list)
-   return render_template('show_all_stories.html', entries=entries, n=n_stories, r = r)
+    entries['cur_ids'].append(cur_keys_list)
+    n_stories = len(cur_keys_list)
+    return render_template('show_all_stories.html', entries=entries, n=n_stories, r = r)
 
 
 @app.route('/login', methods=['GET', 'POST'])

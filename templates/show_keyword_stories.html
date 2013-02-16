@@ -2,21 +2,20 @@
 {% block body %}
 {% if session.logged_in %}
 <div class="keyword_stories">
-    <div id="container-4">
-        <div id="box-key" class="box">
+
             {% for i in range(0,8) %}
             {% if i <= (n-1) %}
-            <div id="story-key">
+            <div id="story-key-clear">
                 <a href="{{ url_for('abridged', sid = entries['cur_ids'][0][i]) }}" style="text-decoration: none">
-                    <h4> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h4>
+                    <h3> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h3>
+                    <hr>
                     <p> {{ r.get('content:%s:paragraph_1' % entries['cur_ids'][0][i]).decode('utf-8') }} </p>
 
                 </a>
             </div>
             {% endif %}
             {% endfor %}
-        </div>
-    </div>
+
 </div>
 {% endif %}
 {% endblock %}

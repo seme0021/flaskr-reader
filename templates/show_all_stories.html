@@ -9,7 +9,7 @@
             <div id="recent-story">
                 <a href="{{ url_for('abridged', sid = entries['cur_ids'][0][i]) }}" style="text-decoration: none; margin: 0%; padding: 0%;">
                 <div>
-                    <h4> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h4>
+                    <h3> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h3>
                     <hr>
                 </div>
 
@@ -28,7 +28,7 @@
             <div id="recent-story">
                 <a href="{{ url_for('abridged', sid = entries['cur_ids'][0][i]) }}" style="text-decoration: none; margin: 0%; padding: 0%;">
                 <div>
-                    <h4> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h4>
+                    <h3> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h3>
                     <hr>
                 </div>
 
@@ -47,7 +47,7 @@
             <div id="recent-story">
                 <a href="{{ url_for('abridged', sid = entries['cur_ids'][0][i]) }}" style="text-decoration: none; margin: 0%; padding: 0%;">
                 <div>
-                    <h4> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h4>
+                    <h3> {{ r.hget('item:news:%s' % entries['cur_ids'][0][i],'headline').decode('utf-8') }} </h3>
                     <hr>
                 </div>
 

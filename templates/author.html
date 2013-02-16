@@ -27,7 +27,13 @@
             <hr width='100%'>
             <h2 style="margin-bottom: 1px;">Recent Stories</h2>
             {% for i in s %}
-                <h3 style="margin-top: 1px;"><a style="text-decoration:none;" href="{{ url_for('abridged', sid=i) }}"> {{ r.hget('item:news:%s' % i,'headline').decode('utf-8') }}</a></h3>
+                <div style="width:100%; border: 3px solid #eee; margin-bottom: 0.5em;">
+                <h3 style="margin-top: 1px; margin-bottom: 5px;">
+                    <a style="text-decoration:none; margin-left: 0.7em; margin-right: 1em;" href="{{ url_for('abridged', sid=i) }}"> {{ r.hget('item:news:%s' % i,'headline').decode('utf-8') }}</a>
+                </h3>
+                    <hr style="width: 90%;">
+                    <p style="color: #8c8c8c; margin-left: 0.7em;">{{ r.get('content:%s:paragraph_1' % i).decode('utf-8')[:200] }}...</p>
+                </div>
 
             {% endfor %}
         </div>
